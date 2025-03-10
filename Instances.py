@@ -16,6 +16,8 @@ class QUTE:
         self.pinion = 6
         self.tirep = 30
         self.dila = -45
+        self.linkage_effort = 1.7
+        self.linkage_kpm = 8.5
 
 
 QUTE_CNG35_Kerb = Vehicle(
