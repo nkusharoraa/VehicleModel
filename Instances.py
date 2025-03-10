@@ -30,7 +30,7 @@ QUTE_CNG35_Kerb = Vehicle(
     np.array([1130.93, 20.67, 1316.84]),   # IBJ of Tie Rod (Rack Vector Definition point) to make BC as Tie Rod.
     np.array([997.96, 571.50, 953.90]),    # Wheel Centre.
     np.array([990.98, 500.68, 917.52]),    # Lower Ball Joint (LBJ) to make KA as Kingpin Axis.
-    QUTE.slr,                                   # SLR
+    226,                                   # SLR
     241,                                   # DLR
     0.4,                                   # Initial_Camber
     0.4,                                   # Initial_Toe
