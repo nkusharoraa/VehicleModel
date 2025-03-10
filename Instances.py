@@ -345,6 +345,41 @@ def get_R129_Design():
         CF_Stiffnessrad = objs['objCONTINENTAL12580R13'].CF_Stiffnessrad,
         CF_pneumatictrail = objs['objCONTINENTAL12580R13'].pneumatictrail
     )
+def get_R129_Homologation():
+    objs = get_common_objs()
+    return Vehicle(
+        np.array([1121.36 + strut_x, 373.90 + strut_y, 1464.24 + strut_z]),
+        np.array([981.15 + obj_x, 496.08 + obj_y, 1119.71 + obj_z]),
+        np.array([996.64 + ibj_x, 203.05 + ibj_y, 1113.44 + ibj_z]),
+        np.array([1050.46,	550.47,	1014.32]),
+        np.array([1050 + lbj_x, 505.79 + lbj_y, 951.67 + lbj_z]),
+        r_La = np.array([950, 233.31, 961.24]),
+        r_Lb = np.array([1150, 233.31, 961.24]),
+        r_strut = np.array([1064.96, 454.61, 1087.66]),
+        GVW = 677.83,
+        b = 893.28,
+        CG_height = 243.96,
+        slr = objs['objR129'].slr,
+        dlr = objs['objR129'].dlr,
+        initial_camber = objs['objR129'].initial_camber,
+        toe_in = objs['objR129'].toe_in,
+        tw = objs['objR129'].tw,
+        wb = objs['objR129'].wb,
+        wheel_rate_f = objs['objR129'].wr_front,
+        wheel_rate_r = objs['objR129'].wr_rear,
+        tire_stiffness_f = objs['objR129'].tire_stiffness_front,
+        tire_stiffness_r = objs['objR129'].tire_stiffness_rear,
+        pinion = objs['objR129'].pinion,
+        tirep = objs['objR129'].tirep,
+        dila = objs['objR129'].dila,
+        linkage_effort = objs['objR129'].linkage_effort,
+        linkage_kpm = objs['objR129'].linkage_kpm,
+        tiredata = objs['objCONTINENTAL12580R13'].tiredata,
+        CF_Loads = objs['objCONTINENTAL12580R13'].CF_Loads,
+        CF_Stiffnessrad = objs['objCONTINENTAL12580R13'].CF_Stiffnessrad,
+        CF_pneumatictrail = objs['objCONTINENTAL12580R13'].pneumatictrail
+    )
+
 def get_R129_Kerb():
     objs = get_common_objs()
     return Vehicle(
@@ -388,6 +423,7 @@ _lazy_instances = {
     "QUTE_35L_EV_Homologation": get_QUTE_35L_EV_Homologation,
     "QUTE_LPG35_Design": get_QUTE_LPG35_Design,
     "R129_Design": get_R129_Design,
+    "R129_Homologation": get_R129_Homologation,
     "R129_Kerb": get_R129_Kerb,
 }
 def __getattr__(name):
