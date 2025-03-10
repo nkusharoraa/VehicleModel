@@ -1685,6 +1685,7 @@ class Vehicle:
 
     # --- Plotting Functions ---
     def plotmycoordinates(self, func, title, legend, ylabel, xlabel):
+        reference = self.reference()
         num = len(func)
         for j in range(num):
             X2 = np.array([])
