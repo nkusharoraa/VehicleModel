@@ -18,6 +18,10 @@ class QUTE:
         self.dila = -45
         self.linkage_effort = 1.7
         self.linkage_kpm = 8.5
+        self.tiredata = np.array([0.697389842166, 0.1120749440478134, 17.8337673155644, 0.4054933824758519, 0.25184969239087557, 5.904032519832173, 0.5968391994177625, 0.309857379732586 ])
+        self.CF_Loads = np.array([0, 150, 200, 250, 500])
+        self.CF_Stiffnessrad = np.array([0, 20234.57749,	23031.75745, 24629.16378, 24629.16378 + 250*(24629.16378-23031.75745)/50])
+        self.pneumatictrail = np.array([0, 0.011909253, 0.018484467, 0.023331694, 0.023331694 + 250*(0.023331694-0.018484467)/50])
 
 
 QUTE_CNG35_Kerb = Vehicle(
@@ -26,7 +30,7 @@ QUTE_CNG35_Kerb = Vehicle(
     np.array([1130.93, 20.67, 1316.84]),   # IBJ of Tie Rod (Rack Vector Definition point) to make BC as Tie Rod.
     np.array([997.96, 571.50, 953.90]),    # Wheel Centre.
     np.array([990.98, 500.68, 917.52]),    # Lower Ball Joint (LBJ) to make KA as Kingpin Axis.
-    226,                                   # SLR
+    QUTE.slr,                                   # SLR
     241,                                   # DLR
     0.4,                                   # Initial_Camber
     0.4,                                   # Initial_Toe
