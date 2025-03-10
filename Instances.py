@@ -132,3 +132,103 @@ QUTE_35L_EV_Design = Vehicle(
     CF_Stiffnessrad = objMRF13570R1269S.CF_Stiffnessrad,  # Tire Data - Cornering Stiffness for different Loads
     CF_pneumatictrail = objMRF13570R1269S.pneumatictrail  # Tire Data - Pneumatic Trail for different Loads 
 )
+QUTE_LPG35_Homologation = Vehicle(
+    np.array([1048.34, 424.19, 1262.10]),  # Upper Ball Joint (UBJ), Top Strut Mount for MacPherson.
+    np.array([971.56, 413.37, 1294.62]),   # OBJ of Tie Rod to make AB as Steering Arm.
+    np.array([1130.44, 20.00, 1316.17]),   # IBJ of Tie Rod (Rack Vector Definition point) to make BC as Tie Rod.
+    np.array([995.55, 570.00, 983.02]),    # Wheel Centre.
+    np.array([988.10, 500.68, 946.63]),    # Lower Ball Joint (LBJ) to make KA as Kingpin Axis.
+    r_La = np.array([1322.30, 515.20, 965.00]),   # LCA Bush 1
+    r_Lb = np.array([1322.30, 262.79, 965.00]),   # LCA Bush 2
+    r_Ua=np.array([1240.13, 401.44, 1283.81]),  # UCA Bush 1
+    r_Ub=np.array([1240.13, 497.44, 1283.81]),   # UCA Bush 2
+    GVW = 814,                                   # GVW
+    b = 678.74,                                # b, CG from the rear axle
+    CG_height = 348.14,                                # CG height from the wheel centre
+    slr = objQUTE.slr,                                    # SLR
+    dlr = objQUTE.dlr,                                    # DLR
+    initial_camber = objQUTE.initial_camber,              # Initial_Camber
+    toe_in = objQUTE.toe_in,                              # Initial_Toe
+    tw = objQUTE.tw,                                      # Track width
+    wb = objQUTE.wb,                                      # Wheelbase
+    wheel_rate_f = objQUTE.wr_front,                      # Wheel Rate Front
+    wheel_rate_r = objQUTE.wr_rear,                       # Wheel Rate Rear
+    tire_stiffness_f = objQUTE.tire_stiffness_front,      # Tire Stiffness Front
+    tire_stiffness_r = objQUTE.tire_stiffness_rear,       # Tire Stiffness Rear
+    pinion = objQUTE.pinion,                              # Pinion Radius
+    tirep = objQUTE.tirep,                                # Tire Pressure
+    dila = objQUTE.dila,                                  # dila, designed inner lock angle
+    linkage_effort = objQUTE.linkage_effort,              # Steering Effort Linkage Friction Estimate from Cascading Activity
+    linkage_kpm = objQUTE.linkage_kpm,                    # Multiplied by the Mechanical Advantage
+    tiredata = objMRF13570R1269S.tiredata,                # Tire Data - Coefficients of the Magic Formula
+    CF_Loads = objMRF13570R1269S.CF_Loads,                # Tire Data - Loads
+    CF_Stiffnessrad = objMRF13570R1269S.CF_Stiffnessrad,  # Tire Data - Cornering Stiffness for different Loads
+    CF_pneumatictrail = objMRF13570R1269S.pneumatictrail  # Tire Data - Pneumatic Trail for different Loads 
+)
+QUTE_35L_EV_Homologation = Vehicle(
+    np.array([1047.51, 424.19, 1271.36]),  # Upper Ball Joint (UBJ), Top Strut Mount for MacPherson.
+    np.array([970.68, 413.41, 1303.77]),   # OBJ of Tie Rod to make AB as Steering Arm.
+    np.array([1130.93, 20.67, 1316.84]),   # IBJ of Tie Rod (Rack Vector Definition point) to make BC as Tie Rod.
+    np.array([995.16, 570.00, 992.20]),    # Wheel Centre.
+    np.array([987.72, 500.68, 955.80]),    # Lower Ball Joint (LBJ) to make KA as Kingpin Axis.
+    r_La = np.array([1322.30, 515.20, 965.00]),   # LCA Bush 1
+    r_Lb = np.array([1322.30, 262.79, 965.00]),   # LCA Bush 2
+    r_Ua = np.array([1240.14, 401.44, 1283.86]),  # UCA Bush 1
+    r_Ub = np.array([1240.14, 497.44, 1283.86]),  # UCA Bush 2
+    GVW = 904.76,                                # GVW
+    b = 750.03,                                   # b, CG from the rear axle
+    CG_height = 322.29,                           # CG height from the wheel centre
+    slr = objQUTE.slr,                                    # SLR
+    dlr = objQUTE.dlr,                                    # DLR
+    initial_camber = objQUTE.initial_camber,              # Initial_Camber
+    toe_in = objQUTE.toe_in,                              # Initial_Toe
+    tw = objQUTE.tw,                                      # Track width
+    wb = objQUTE.wb,                                      # Wheelbase
+    wheel_rate_f = objQUTE.wr_front,                      # Wheel Rate Front
+    wheel_rate_r = objQUTE.wr_rear,                       # Wheel Rate Rear
+    tire_stiffness_f = objQUTE.tire_stiffness_front,      # Tire Stiffness Front
+    tire_stiffness_r = objQUTE.tire_stiffness_rear,       # Tire Stiffness Rear
+    pinion = objQUTE.pinion,                              # Pinion Radius
+    tirep = objQUTE.tirep,                                # Tire Pressure
+    dila = objQUTE.dila,                                  # dila, designed inner lock angle
+    linkage_effort = objQUTE.linkage_effort,              # Steering Effort Linkage Friction Estimate from Cascading Activity
+    linkage_kpm = objQUTE.linkage_kpm,                    # Multiplied by the Mechanical Advantage
+    tiredata = objMRF13570R1269S.tiredata,                # Tire Data - Coefficients of the Magic Formula
+    CF_Loads = objMRF13570R1269S.CF_Loads,                # Tire Data - Loads
+    CF_Stiffnessrad = objMRF13570R1269S.CF_Stiffnessrad,  # Tire Data - Cornering Stiffness for different Loads
+    CF_pneumatictrail = objMRF13570R1269S.pneumatictrail  # Tire Data - Pneumatic Trail for different Loads 
+)
+QUTE_LPG35_Design = Vehicle(
+    np.array([1047.43, 424.19, 1272.65]),  # Upper Ball Joint (UBJ), Top Strut Mount for MacPherson.
+    np.array([970.60, 413.41, 1305.06]),   # OBJ of Tie Rod to make AB as Steering Arm.
+    np.array([1130.44, 20.00, 1316.17]),   # IBJ of Tie Rod (Rack Vector Definition point) to make BC as Tie Rod.
+    np.array([995.12, 570.00, 993.48]),    # Wheel Centre.
+    np.array([987.68, 500.68, 957.08]),    # Lower Ball Joint (LBJ) to make KA as Kingpin Axis.
+    r_La = np.array([1322.30, 515.20, 965.00]),   # LCA Bush 1
+    r_Lb = np.array([1322.30, 262.79, 965.00]),   # LCA Bush 2
+    r_Ua = np.array([1240.14, 401.44, 1283.86]),  # UCA Bush 1
+    r_Ub = np.array([1240.14, 497.44, 1283.86]),  # UCA Bush 2
+    GVW = 995,                                   # GVW
+    b = 692.33,                                # b, CG from the rear axle
+    CG_height = 419.75,                                # CG height from the wheel centre
+    slr = objQUTE.slr,                                    # SLR
+    dlr = objQUTE.dlr,                                    # DLR
+    initial_camber = objQUTE.initial_camber,              # Initial_Camber
+    toe_in = objQUTE.toe_in,                              # Initial_Toe
+    tw = objQUTE.tw,                                      # Track width
+    wb = objQUTE.wb,                                      # Wheelbase
+    wheel_rate_f = objQUTE.wr_front,                      # Wheel Rate Front
+    wheel_rate_r = objQUTE.wr_rear,                       # Wheel Rate Rear
+    tire_stiffness_f = objQUTE.tire_stiffness_front,      # Tire Stiffness Front
+    tire_stiffness_r = objQUTE.tire_stiffness_rear,       # Tire Stiffness Rear
+    pinion = objQUTE.pinion,                              # Pinion Radius
+    tirep = objQUTE.tirep,                                # Tire Pressure
+    dila = objQUTE.dila,                                  # dila, designed inner lock angle
+    linkage_effort = objQUTE.linkage_effort,              # Steering Effort Linkage Friction Estimate from Cascading Activity
+    linkage_kpm = objQUTE.linkage_kpm,                    # Multiplied by the Mechanical Advantage
+    tiredata = objMRF13570R1269S.tiredata,                # Tire Data - Coefficients of the Magic Formula
+    CF_Loads = objMRF13570R1269S.CF_Loads,                # Tire Data - Loads
+    CF_Stiffnessrad = objMRF13570R1269S.CF_Stiffnessrad,  # Tire Data - Cornering Stiffness for different Loads
+    CF_pneumatictrail = objMRF13570R1269S.pneumatictrail  # Tire Data - Pneumatic Trail for different Loads 
+)
+    
