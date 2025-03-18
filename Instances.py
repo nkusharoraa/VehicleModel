@@ -311,6 +311,20 @@ lbj_x = -10
 lbj_y = -15.1
 lbj_z = 0
 
+# # strut_x = 0
+# strut_y = -4
+# strut_z = 0
+# # obj_x = 0
+# obj_y = -4
+# obj_z = 0
+# # ibj_x = 0
+# ibj_y = 0
+# ibj_z = 0
+# # lbj_x = 0
+# lbj_y = -4
+# lbj_z = 0
+
+
 def get_R129_Design():
     objs = get_common_objs()
     return Vehicle(

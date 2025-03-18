@@ -1666,11 +1666,18 @@ class Vehicle:
         angle = self.KPA_rotation_angle_vs_rack(y1/360*c_factor)
         friction = self.linkage_friction_contribution_on_kpm
         factor = 1
+        #dy2_dt = 1  # Default initialization
         if(np.sign(y2)>=0 and t>0):
             factor = 0
-            
+            #dy2_dt = 0  # Default initialization
             print(f"Optimal parameters: y1 = {y1}, t = {t}")
         dy2_dt = -factor*(self.left_plus_right_returning_moment(angle) - 2*friction)/ 2/ k * self.steering_ratio(angle)
+        #  extra torque from spring calculatioins
+        # if angle>-35:
+        #       dy2_dt = -factor*(self.left_plus_right_returning_moment(angle) - 2*friction)/ 2/ k * self.steering_ratio(angle)
+        # else:
+        #       dy2_dt = -factor*(self.left_plus_right_returning_moment(angle)-0.3*6*(angle+35) - 2*friction)/ 2/ k * self.steering_ratio(angle)
+        #  print   (dy2_dt, angle)
         return [dy1_dt, dy2_dt]
     def steering_system(self,t,Y,k):
         self.dynamic_analysis = 1
