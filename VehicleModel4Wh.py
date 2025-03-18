@@ -60,6 +60,8 @@ class Vehicle:
              speed: float = 10.0,
              linkage_effort: float = 1.36, # Nm
              linkage_kpm: float = 8.16, # Nm
+             I_w: float = 0.34,
+             I_ss: float = 0.03,
              tiredata: np.array =  np.array([0.5094636099593582, 0.1120749440478134, 17.8337673155644, 0.4054933824758519, 0.25184969239087557, 5.904032519832173, 0.5968391994177625, 0.309857379732586 ]),
              CF_Loads: np.array = np.array([0, 150, 200, 250, 500]),
              CF_Stiffnessrad: np.array = np.array([0, 20234.57749,	23031.75745, 24629.16378, 24629.16378 + 250*(24629.16378-23031.75745)/50]),
@@ -77,6 +79,8 @@ class Vehicle:
                                            CG_height, wheel_rate_f, wheel_rate_r, tire_stiffness_f, tire_stiffness_r,
                                            pinion, tirep, dila, r_La, r_Lb, r_strut, r_Ua, r_Ub, mu, g, tiredata, speed)
         # Initialize common parameters
+        self.I_w = I_w
+        self.I_ss = I_ss
         self.CF_Loads = CF_Loads
         self.CF_Stiffnessrad = CF_Stiffnessrad
         self.CF_pneumatictrail = CF_pneumatictrail
@@ -1620,8 +1624,8 @@ class Vehicle:
         self.dynamic_analysis = 1
         reference = self.reference()
         # Parameters
-        I_w = 0.34  # Moment of Inertia of the wheel wrt the Kingpin Axis
-        I_ss = 0.030 # Moment of Interia of the steering system wrt the steering column
+        I_w = self.I_w  # Moment of Inertia of the wheel wrt the Kingpin Axis
+        I_ss = self.I_ss  # Moment of Interia of the steering system wrt the steering column
         y0 = self.rack_stroke/37.71*360  # Initial condition for y
         v0 = 0.0  # Initial condition for y'
         # t_span = (0, 0.1)  # Time range
