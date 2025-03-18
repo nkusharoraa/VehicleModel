@@ -233,7 +233,7 @@ class Vehicle:
         methods respectively, with `self.curr_KPA_angle_for_fvsa` as input.
         """
         reference = self.reference()
-        if(reference.r_strut[0] == 0):
+        if(reference.r_strut[0] == 0): # No strut present
             la = values[0]
             mu = values[1]
             current_A = self.curr_A(self.curr_KPA_angle_for_fvsa)
