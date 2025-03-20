@@ -299,31 +299,31 @@ def get_QUTE_35L_EV_Homologation():
     )
 
 # Coordinates used in R129 vehicle computations
-# strut_x = 10
-# strut_y = -15.1
-# strut_z = 0
-# obj_x = 0
-# obj_y = -15
-# obj_z = 0
-# ibj_x = -5
-# ibj_y = -10
-# ibj_z = 0
-# lbj_x = -10
-# lbj_y = -15.1
-# lbj_z = 0
-
-strut_x = 0
-strut_y = 0
+strut_x = 10
+strut_y = -15.1
 strut_z = 0
 obj_x = 0
-obj_y = 0
+obj_y = -15
 obj_z = 0
-ibj_x = 0
-ibj_y = 0
+ibj_x = -5
+ibj_y = -10
 ibj_z = 0
-lbj_x = 0
-lbj_y = 0
+lbj_x = -10
+lbj_y = -15.1
 lbj_z = 0
+
+# strut_x = 0
+# strut_y = 0
+# strut_z = 0
+# obj_x = 0
+# obj_y = 0
+# obj_z = 0
+# ibj_x = 0
+# ibj_y = 0
+# ibj_z = 0
+# lbj_x = 0
+# lbj_y = 0
+# lbj_z = 0
 
 
 def get_R129_Design():
