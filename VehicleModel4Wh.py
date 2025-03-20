@@ -86,8 +86,8 @@ class Vehicle:
         self.CF_pneumatictrail = CF_pneumatictrail
         self.dynamic_analysis = 1
         self.model = self.regression_model()
-        reference = self.reference()
         self.dynamic_analysis = 0
+        reference = self.reference()
         self.model = self.regression_model()
         self.rack_stroke = self.rack_vs_road_steer(reference.dila - toe_in)
         self.trainslipangles()
@@ -444,35 +444,6 @@ class Vehicle:
         reference.dpsvsa[position_to_add] = (l1 + l2) / 2
         
         return reference.dpsvsa[position_to_add]
-    def solveK(self, inputval):
-        """
-        Solves for the position of point K along the suspension axis.
-
-        This method calculates the position of point K based on the input value `t` and the current configuration
-        of the suspension. It uses the current orientation and positions of points O, K, and the instantaneous
-        centers (ICs) for the FVSA and SVSA suspensions.
-
-        Args:
-        inputval (list): Input value `t` as a list where `t = [t_val]`.
-
-        Returns:
-        list: A list containing the staticequation `eq1`, representing the error between the current and previous delta_z values
-            and the difference between `tempK` and the stored position of K.
-
-        Notes:
-        - Uses the current KPA angle (`curr_KPA_angle_for_K`) to calculate positions and orientations.
-        - Adjusts positions based on the sign of `curr_KPA_angle_for_K`.
-        - Utilizes rotational transformations and delta_z calculations for accuracy.
-        """
-        reference = self.reference()
-        t = inputval[0]
-        tempO = self.curr_O(self.curr_KPA_angle_for_K)
-        position_to_add = reference.zeropos + int(np.round(self.curr_KPA_angle_for_K, reference.maxdecimal) * reference.conversionstep)
-        tempK = Vehicle.rotation(reference.dpK[position_to_add - int(np.sign(self.curr_KPA_angle_for_K))].tolist(),
-                                self.fvsa_ic(self.curr_KPA_angle_for_K - np.sign(self.curr_KPA_angle_for_K) * reference.step).tolist(),
-                                self.svsa_ic(self.curr_KPA_angle_for_K - np.sign(self.curr_KPA_angle_for_K) * reference.step).tolist(), t)
-        eq1 = self.delta_z(self.curr_KPA_angle_for_K) - self.delta_z(self.curr_KPA_angle_for_K - reference.step * np.sign(self.curr_KPA_angle_for_K)) + (tempK - reference.dpK[position_to_add - int(np.sign(self.curr_KPA_angle_for_K))])[2]
-        return [eq1]
     def curr_K(self, curr_KPA_angle):
         """
         Computes the position of point K based on the current KPA angle.
@@ -495,13 +466,13 @@ class Vehicle:
         reference = self.reference()
         if curr_KPA_angle == 0:
             return reference.r_K
-
         position_to_add = reference.zeropos + int(np.round(curr_KPA_angle, reference.maxdecimal) * reference.conversionstep)
 
         # Adjust position based on stored data and IC calculations
         if reference.dpK[position_to_add][0] < reference.r_K[0] / 10:
-            self.curr_KPA_angle_for_K = curr_KPA_angle
-            [t] = fsolve(self.solveK, [0.01])
+            self.curr_KPA_angle_for_T = curr_KPA_angle
+            self.old_T = Vehicle.rotation(reference.dpT[position_to_add-int(np.sign(curr_KPA_angle))].tolist(), self.curr_A(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(),self.curr_K(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(), np.sign(curr_KPA_angle)*reference.step)
+            [t] = fsolve(self.solveT, [0.01])
             reference.dpK[position_to_add] = Vehicle.rotation(reference.dpK[position_to_add - int(np.sign(curr_KPA_angle))].tolist(),
                                                         self.fvsa_ic(curr_KPA_angle - np.sign(curr_KPA_angle) * reference.step).tolist(),
                                                         self.svsa_ic(curr_KPA_angle - np.sign(curr_KPA_angle) * reference.step).tolist(), t)
@@ -530,38 +501,6 @@ class Vehicle:
         m = t / Vehicle.magnitude(t)
         reference.currKPA = m
         return m
-    def solveA(self, inputval):
-        """
-        Solves for the rotation parameter `t` to determine the current position of point A (upper ball joint) at the specified Kingpin Axis (KPA) angle.
-
-        This method computes the rotation parameter `t` needed to align the position of point A (upper ball joint)
-        using the Front View Swing Arm (FVSA) and Side View Swing Arm (SVSA) intersection points.
-        The method solves for `t` by ensuring the vertical displacement consistency between successive KPA angles.
-
-        Args:
-        inputval (list): A list containing the initial guess for the rotation parameter `t`.
-
-        Returns:
-        list: A list containing the staticequation residual that needs to be solved to find `t`.
-
-        Notes:
-        - The method uses `curr_O` to obtain the current position of point O (wheel center).
-        - The position to add is determined based on the current KPA angle.
-        - The temporary position of point A (`tempA`) is computed using the `rotation` method.
-        - The vertical displacement (`delta_z`) consistency is checked between successive KPA angles.
-        """
-        reference = self.reference()
-        t = inputval[0]
-        tempO = self.curr_O(self.curr_KPA_angle_for_A)
-        position_to_add = reference.zeropos + int(np.round(self.curr_KPA_angle_for_A, reference.maxdecimal) * reference.conversionstep)
-        tempA = Vehicle.rotation(
-            reference.dpA[position_to_add - int(np.sign(self.curr_KPA_angle_for_A))].tolist(),
-            self.fvsa_ic(self.curr_KPA_angle_for_A - np.sign(self.curr_KPA_angle_for_A) * reference.step).tolist(),
-            self.svsa_ic(self.curr_KPA_angle_for_A - np.sign(self.curr_KPA_angle_for_A) * reference.step).tolist(),
-            t
-        )
-        eq1 = self.delta_z(self.curr_KPA_angle_for_A) - self.delta_z(self.curr_KPA_angle_for_A - reference.step * np.sign(self.curr_KPA_angle_for_A)) + (tempA - reference.dpA[position_to_add - int(np.sign(self.curr_KPA_angle_for_A))])[2]
-        return [eq1]
     def curr_A(self, curr_KPA_angle):
         """
         Determines the current position of point A (upper ball joint) at the specified Kingpin Axis (KPA) angle.
@@ -578,19 +517,19 @@ class Vehicle:
         Notes:
         - If the `curr_KPA_angle` is zero, it returns the initial position `r_A`.
         - The method checks if the position for the given angle has already been computed.
-        - If not, it solves for the rotation parameter `t` using the `solveA` method.
+        - If not, it solves for the rotation parameter `t` using the `solveT` method.
         - The position is then updated in the `dpA` array using the `rotation` method.
         """
         reference = self.reference()
-        # print(curr_KPA_angle)
+        
         if np.abs(curr_KPA_angle) < 10e-4:    
             return reference.r_A
         position_to_add = reference.zeropos + int(np.round(curr_KPA_angle, reference.maxdecimal) * reference.conversionstep)
-        # print(position_to_add)
-        # print(reference.dpA[position_to_add][0])
+        
         if reference.dpA[position_to_add][0] < reference.r_A[0] / 100000:
-            self.curr_KPA_angle_for_A = curr_KPA_angle
-            [t] = fsolve(self.solveA, [0.01])
+            self.curr_KPA_angle_for_T = curr_KPA_angle
+            self.old_T = Vehicle.rotation(reference.dpT[position_to_add-int(np.sign(curr_KPA_angle))].tolist(), self.curr_A(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(),self.curr_K(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(), np.sign(curr_KPA_angle)*reference.step)
+            [t] = fsolve(self.solveT, [0.01])
             reference.dpA[position_to_add] = Vehicle.rotation(
                 reference.dpA[position_to_add - int(np.sign(curr_KPA_angle))].tolist(),
                 self.fvsa_ic(curr_KPA_angle - np.sign(curr_KPA_angle) * reference.step).tolist(),
@@ -719,98 +658,157 @@ class Vehicle:
         return Vehicle.project_points(x,y,z,a,b,c)[0]
     # --- Local X and Y axes for the given centre, point and normal ---
     # --- Current Coordinates of points B,C,W,T and wheel travel in Z ---
-    def old_B(self, curr_KPA_angle):
-        reference = self.reference()
-        if np.abs(curr_KPA_angle) < 1e-3:
-            return reference.r_B
-        shift = curr_KPA_angle*reference.conversionstep
-        rounded_curr_KPA_angle = np.round(curr_KPA_angle,reference.maxdecimal)
-        rounded_shift = int(rounded_curr_KPA_angle*reference.conversionstep)
-        difference = curr_KPA_angle - rounded_curr_KPA_angle
-        position_to_add = reference.zeropos + rounded_shift
-        
-        if(np.abs(shift-rounded_shift) < 1e-3):
-            if(reference.dpB[position_to_add][0]<reference.r_B[0]/10):
-                reference.dpB[position_to_add] = Vehicle.rotation(reference.dpnewB[position_to_add-int(np.sign(curr_KPA_angle))].tolist(), self.curr_A(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(),self.curr_K(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(), np.sign(curr_KPA_angle)*reference.step)          
-            return reference.dpB[position_to_add]
-        
-        return Vehicle.rotation(reference.dpnewB[position_to_add].tolist(), self.curr_A(rounded_curr_KPA_angle).tolist(),self.curr_K(rounded_curr_KPA_angle).tolist(), difference)
+
     def curr_B(self, curr_KPA_angle):
         reference = self.reference()
-        if np.abs(curr_KPA_angle) < 1e-3:
+        self.curr_KPA_angle_for_T = curr_KPA_angle
+        if np.abs(curr_KPA_angle) < 10e-4:
             return reference.r_B
-        shift = curr_KPA_angle*reference.conversionstep
-        rounded_curr_KPA_angle = np.round(curr_KPA_angle,reference.maxdecimal)
-        difference = curr_KPA_angle - rounded_curr_KPA_angle
-        rounded_shift = int(rounded_curr_KPA_angle*reference.conversionstep)
-        if(np.abs(shift-rounded_shift) < 1e-3):
-            position_to_add = reference.zeropos + rounded_shift
-            if(reference.dpnewB[position_to_add][0]<reference.r_B[0]/10):
-                reference.dpnewB[position_to_add] = self.old_B(curr_KPA_angle) + self.curr_K(curr_KPA_angle) - self.curr_K(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle))
-            return reference.dpnewB[position_to_add]
-        return self.old_B(curr_KPA_angle) + self.curr_K(curr_KPA_angle) - self.curr_K(rounded_curr_KPA_angle)
+        rounded_value = np.round(curr_KPA_angle,reference.maxdecimal)
+        shift = curr_KPA_angle - rounded_value
+        position_to_add = reference.zeropos+int(np.round(curr_KPA_angle,reference.maxdecimal)*reference.conversionstep)
+        if (np.abs(shift) < 10e-4):
+            if(reference.dpB[position_to_add][0]<reference.r_B[0]/1000000000):
+                self.old_B = Vehicle.rotation(reference.dpB[position_to_add-int(np.sign(curr_KPA_angle))].tolist(), self.curr_A(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(),self.curr_K(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(), np.sign(curr_KPA_angle)*reference.step)
+                self.old_T = Vehicle.rotation(reference.dpT[position_to_add-int(np.sign(curr_KPA_angle))].tolist(), self.curr_A(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(),self.curr_K(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(), np.sign(curr_KPA_angle)*reference.step)
+                [t] = fsolve(self.solveT, [0.1])
+                reference.dpB[position_to_add] = Vehicle.rotation(
+                    self.old_B.tolist(),
+                    self.fvsa_ic(curr_KPA_angle - np.sign(curr_KPA_angle) * reference.step).tolist(),
+                    self.svsa_ic(curr_KPA_angle - np.sign(curr_KPA_angle) * reference.step).tolist(),
+                    t
+                )
+            return reference.dpB[position_to_add]
+        self.old_T = Vehicle.rotation(reference.dpT[position_to_add].tolist(), self.curr_A(rounded_value).tolist(),self.curr_K(rounded_value).tolist(), shift)
+        self.old_B = Vehicle.rotation(reference.dpB[position_to_add].tolist(), self.curr_A(rounded_value).tolist(),self.curr_K(rounded_value).tolist(), shift)
+        [t] = fsolve(self.solveT, [0.01])
+        temp = Vehicle.rotation(
+            self.old_B.tolist(),
+            self.fvsa_ic(rounded_value).tolist(),
+            self.svsa_ic(rounded_value).tolist(),
+            t
+        )
+        return temp     
     def curr_C(self, curr_KPA_angle):
         reference = self.reference()
-        if np.abs(curr_KPA_angle) < 1e-3:
-            return reference.r_C
-        length = Vehicle.magnitude(reference.r_C-reference.r_B)
-        temp = self.curr_B(curr_KPA_angle)
-        shift = curr_KPA_angle*reference.conversionstep
-        rounded_curr_KPA_angle = np.round(curr_KPA_angle,reference.maxdecimal)
-        rounded_shift = int(rounded_curr_KPA_angle*reference.conversionstep)
-        if(np.abs(shift-rounded_shift) < 1e-3):
-            position_to_add = reference.zeropos + rounded_shift
-            if(reference.dpC[position_to_add][0]<reference.r_C[0]/10):
-                reference.dpC[position_to_add] = np.array([reference.r_C[0],temp[1]-np.sqrt(length**2-(reference.r_C[0]-temp[0])**2-(reference.r_C[2]-temp[2])**2), reference.r_C[2]])
-            return reference.dpC[position_to_add]
-        
-        return np.array([reference.r_C[0],temp[1]-np.sqrt(length**2-(reference.r_C[0]-temp[0])**2-(reference.r_C[2]-temp[2])**2), reference.r_C[2]])
 
+        if curr_KPA_angle==0:
+            return reference.r_C
+        temp = self.curr_B(curr_KPA_angle)
+        length = Vehicle.magnitude(self.tierod(0))
+        return np.array([reference.r_C[0],temp[1]-np.sqrt(length**2-(reference.r_C[0]-temp[0])**2-(reference.r_C[2]-temp[2])**2), reference.r_C[2]])
+    def solveT(self, inputval):
+        reference = self.reference()
+        t = inputval[0]
+        theta = self.curr_KPA_angle_for_T
+        position_to_add = reference.zeropos + int(np.round(theta, reference.maxdecimal) * reference.conversionstep)
+        tempT = Vehicle.rotation(
+            self.old_T.tolist(),
+            self.fvsa_ic(theta - np.sign(theta) * reference.step).tolist(),
+            self.svsa_ic(theta - np.sign(theta) * reference.step).tolist(),
+            t
+        )
+        eq1 = self.delta_z(theta) - self.delta_z(theta - reference.step * np.sign(theta)) + (tempT - self.old_T)[2]
+        return [eq1]
     def curr_W(self, curr_KPA_angle):
         reference = self.reference()
-        if curr_KPA_angle==0:
+        self.curr_KPA_angle_for_T = curr_KPA_angle
+        if np.abs(curr_KPA_angle) < 10e-4:
             return reference.r_W
         position_to_add = reference.zeropos+int(np.round(curr_KPA_angle,reference.maxdecimal)*reference.conversionstep)
-        if(reference.dpW[position_to_add][0]<reference.r_W[0]/1000000000):
-            temp = Vehicle.rotation(reference.dpW[position_to_add-int(np.sign(curr_KPA_angle))].tolist(), self.curr_A(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(),self.curr_K(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(), np.sign(curr_KPA_angle)*reference.step)
-            temp[2] = reference.r_W[2]
-            reference.dpW[position_to_add] = temp
+        rounded_value = np.round(curr_KPA_angle,reference.maxdecimal)
+        shift = curr_KPA_angle - rounded_value
+        if (np.abs(shift) < 10e-4):
+            if(reference.dpW[position_to_add][0]<reference.r_W[0]/1000000000):
+                self.old_T = Vehicle.rotation(reference.dpT[position_to_add-int(np.sign(curr_KPA_angle))].tolist(), self.curr_A(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(),self.curr_K(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(), np.sign(curr_KPA_angle)*reference.step)
+                self.old_W = Vehicle.rotation(reference.dpW[position_to_add-int(np.sign(curr_KPA_angle))].tolist(), self.curr_A(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(),self.curr_K(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(), np.sign(curr_KPA_angle)*reference.step)
+                
+                [t] = fsolve(self.solveT, [0.01])
+                
+                tempW = Vehicle.rotation(
+                    self.old_W.tolist(),
+                    self.fvsa_ic(curr_KPA_angle - np.sign(curr_KPA_angle) * reference.step).tolist(),
+                    self.svsa_ic(curr_KPA_angle - np.sign(curr_KPA_angle) * reference.step).tolist(),
+                    t
+                )
+                
+                tempT = self.curr_T(curr_KPA_angle)
+                tempO = self.curr_O(curr_KPA_angle)
+            
+                val =  Vehicle.projection(tempW, tempO - tempT, tempT )
+                reference.dpW[position_to_add] = val
             return reference.dpW[position_to_add]
-        temp = Vehicle.rotation(reference.dpW[position_to_add-int(np.sign(curr_KPA_angle))].tolist(), self.curr_A(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(),self.curr_K(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(), curr_KPA_angle - np.round(curr_KPA_angle,reference.maxdecimal))
-        temp[2] = reference.r_W[2]
-        return temp
+        self.old_T = Vehicle.rotation(reference.dpT[position_to_add].tolist(), self.curr_A(rounded_value).tolist(),self.curr_K(rounded_value).tolist(), shift)
+        self.old_W = Vehicle.rotation(reference.dpW[position_to_add].tolist(), self.curr_A(rounded_value).tolist(),self.curr_K(rounded_value).tolist(), shift)
+        [t] = fsolve(self.solveT, [0.01])
+        tempW = Vehicle.rotation(
+            self.old_W.tolist(),
+            self.fvsa_ic(rounded_value).tolist(),
+            self.svsa_ic(rounded_value).tolist(),
+            t
+        )
+        tempT = self.curr_T(curr_KPA_angle)
+        tempO = self.curr_O(curr_KPA_angle)
+        val =  Vehicle.projection(tempW, tempO - tempT, tempT )
+        return val
     def curr_T(self, curr_KPA_angle):
         reference = self.reference()
-        if curr_KPA_angle==0:
+        self.curr_KPA_angle_for_T = curr_KPA_angle
+        if np.abs(curr_KPA_angle) < 10e-4:
             return reference.r_T
-        position_to_add = reference.zeropos+int(np.round(curr_KPA_angle,reference.maxdecimal)*reference.conversionstep)
-        if(reference.dpT[position_to_add][0]<reference.r_T[0]/1000000000):
-            
-            temp = Vehicle.rotation(reference.dpT[position_to_add-int(np.sign(curr_KPA_angle))].tolist(), self.curr_A(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(),self.curr_K(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(), np.sign(curr_KPA_angle)*reference.step)
-            temp[2] = reference.r_T[2]
-            reference.dpT[position_to_add] = temp
+        rounded_value = np.round(curr_KPA_angle,reference.maxdecimal)
+        shift = curr_KPA_angle - rounded_value
+        position_to_add = reference.zeropos+int(rounded_value*reference.conversionstep)
+        if (np.abs(shift) < 10e-4):
+            if(reference.dpT[position_to_add][0]<reference.r_T[0]/1000000000):
+                
+                self.old_T = Vehicle.rotation(reference.dpT[position_to_add-int(np.sign(curr_KPA_angle))].tolist(), self.curr_A(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(),self.curr_K(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(), np.sign(curr_KPA_angle)*reference.step)
+                [t] = fsolve(self.solveT, [0.01])
+                reference.dpT[position_to_add] = Vehicle.rotation(
+                    self.old_T.tolist(),
+                    self.fvsa_ic(curr_KPA_angle - np.sign(curr_KPA_angle) * reference.step).tolist(),
+                    self.svsa_ic(curr_KPA_angle - np.sign(curr_KPA_angle) * reference.step).tolist(),
+                    t
+                )
             return reference.dpT[position_to_add]
-        temp = Vehicle.rotation(reference.dpT[position_to_add-int(np.sign(curr_KPA_angle))].tolist(), self.curr_A(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(),self.curr_K(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(), curr_KPA_angle - np.round(curr_KPA_angle,reference.maxdecimal))
-        temp[2] = reference.r_T[2]
+        
+        self.old_T = Vehicle.rotation(reference.dpT[position_to_add].tolist(), self.curr_A(rounded_value).tolist(),self.curr_K(rounded_value).tolist(), shift)
+        [t] = fsolve(self.solveT, [0.01])
+        temp = Vehicle.rotation(
+            self.old_T.tolist(),
+            self.fvsa_ic(rounded_value).tolist(),
+            self.svsa_ic(rounded_value).tolist(),
+            t
+        )
         return temp
     def delta_z(self, curr_KPA_angle):
         reference = self.reference()
-        if curr_KPA_angle==0:
+        if curr_KPA_angle == 0:
             return 0
         position_to_add = reference.zeropos+int(np.round(curr_KPA_angle,reference.maxdecimal)*reference.conversionstep)
-        if(reference.dpdz[position_to_add]==0):
-            reference.dpdz[position_to_add] = reference.dpdz[position_to_add-int(np.sign(curr_KPA_angle))]+Vehicle.rotation(reference.dpT[position_to_add-int(np.sign(curr_KPA_angle))].tolist(), self.curr_A(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(),self.curr_K(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(), np.sign(curr_KPA_angle)*reference.step)[2] - reference.r_T[2]
+        if(np.abs(reference.dpdz[position_to_add])<1e-4):
+            old_T = Vehicle.rotation(reference.dpT[position_to_add-int(np.sign(curr_KPA_angle))].tolist(), self.curr_A(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(),self.curr_K(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(), np.sign(curr_KPA_angle)*reference.step)
+            reference.dpdz[position_to_add] = reference.dpdz[position_to_add-int(np.sign(curr_KPA_angle))] + old_T[2] - reference.r_T[2]
+           
         return reference.dpdz[position_to_add]
     def curr_O(self, curr_KPA_angle):
         reference = self.reference()
+        self.curr_KPA_angle_for_T = curr_KPA_angle
         if np.abs(curr_KPA_angle)<=10e-4:
             return reference.r_O
         position_to_add = reference.zeropos+int(np.round(curr_KPA_angle,reference.maxdecimal)*reference.conversionstep)
         if(reference.dpO[position_to_add][0]<reference.r_O[0]/1000000000):
-            # print(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle))
-            temp = Vehicle.rotation(reference.dpO[position_to_add-int(np.sign(curr_KPA_angle))].tolist(), self.curr_A(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(),self.curr_K(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(), np.sign(curr_KPA_angle)*reference.step)
-            temp[2] = temp[2] - self.delta_z(curr_KPA_angle) + self.delta_z(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle))
-            reference.dpO[position_to_add] = temp
+            
+            self.old_T = Vehicle.rotation(reference.dpT[position_to_add-int(np.sign(curr_KPA_angle))].tolist(), self.curr_A(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(),self.curr_K(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(), np.sign(curr_KPA_angle)*reference.step)
+            self.old_O = Vehicle.rotation(reference.dpO[position_to_add-int(np.sign(curr_KPA_angle))].tolist(), self.curr_A(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(),self.curr_K(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(), np.sign(curr_KPA_angle)*reference.step)
+            
+            [t] = fsolve(self.solveT, [0.01])
+            reference.dpO[position_to_add] = Vehicle.rotation(
+                self.old_O.tolist(),
+                self.fvsa_ic(curr_KPA_angle - np.sign(curr_KPA_angle) * reference.step).tolist(),
+                self.svsa_ic(curr_KPA_angle - np.sign(curr_KPA_angle) * reference.step).tolist(),
+                t
+            )
         return reference.dpO[position_to_add]
     # --- Current Tangent Motion of the Tire Contact Patch, returns the direction ---
     def curr_tangent(self, point):
@@ -835,8 +833,9 @@ class Vehicle:
     def wheel_inclination(self, curr_KPA_angle):
         return self.curr_O(curr_KPA_angle)-self.curr_T(curr_KPA_angle)
     def wheel_heading(self, curr_KPA_angle):
-        
-        return self.curr_W(curr_KPA_angle)-self.curr_T(curr_KPA_angle)
+        val = self.curr_W(curr_KPA_angle)-self.curr_T(curr_KPA_angle)
+        mag = Vehicle.magnitude(val)
+        return val/mag
     # --- Caster Trail, Scrub Radius and Spindle Length ---
     def trails(self, curr_KPA_angle):
         reference = self.reference()
@@ -860,10 +859,10 @@ class Vehicle:
         return np.sign(np.cross(inclination,heading)[2])*np.degrees(np.arccos(np.dot(triple_product, np.array([0,0,1]))/mag))
     def road_steer(self, curr_KPA_angle):
         return np.degrees(np.sign(curr_KPA_angle)*np.arccos(np.dot(self.wheel_heading(curr_KPA_angle),
-                                                                   self.wheel_heading(0))/Vehicle.magnitude(self.wheel_heading(curr_KPA_angle))))
+                                                                   self.wheel_heading(0))/(Vehicle.magnitude(self.wheel_heading(curr_KPA_angle))*Vehicle.magnitude(self.wheel_heading(0)))))
     def wheel_angle(self, curr_KPA_angle):
         return -np.sign(self.wheel_heading(curr_KPA_angle)[1])*np.degrees(np.arccos(np.dot(self.wheel_heading(curr_KPA_angle),
-                                                                   np.array([-1,0,0]))/Vehicle.magnitude(self.wheel_heading(curr_KPA_angle))))
+                                                                   np.array([-1,0,0]))/(Vehicle.magnitude(self.wheel_heading(curr_KPA_angle))*Vehicle.magnitude(self.wheel_heading(0)))))
     # --- Steering Ratio ---
     def steering_ratio(self, curr_KPA_angle):
         """Steering Ratio is the Ratio of Steering Wheel Angle to the Road Steer Angle
@@ -901,9 +900,7 @@ class Vehicle:
         # Ensure x is a scalar
         x = x[0] if isinstance(x, (list, np.ndarray)) else x
         return self.rack_displacement(x)
-    def inverse_f(self, y):
-        # Find x such that f(x) = y
-        return fsolve(lambda x: self.helperroadsteer(x) - y, x0=[y])[0] 
+
     def regression_model(self):
         reference = self.reference()
         X = np.array([])
@@ -912,7 +909,7 @@ class Vehicle:
         for i in range(0,50*reference.conversionstep):
             t = np.round(t + reference.step,2)
             X = np.append(X,self.road_steer(t))
-            # print(self.curr_T(t))
+           
             y = np.append(y,t)
         t = 0
         for i in range(0,50*reference.conversionstep):
@@ -920,7 +917,7 @@ class Vehicle:
             X = np.append(X,self.road_steer(t))
             y = np.append(y,t)
         X = X.reshape(-1,1)
-        poly_features = PolynomialFeatures(degree=10, include_bias=False)
+        poly_features = PolynomialFeatures(degree=6, include_bias=False)
         X_poly = poly_features.fit_transform(X)
         model = LinearRegression()
         model.fit(X_poly, y)
@@ -937,16 +934,22 @@ class Vehicle:
             X1 = np.append(X1,self.rack_displacement(t1))
             y1 = np.append(y1,t1)
         X1 = X1.reshape(-1,1)
-        poly_features1 = PolynomialFeatures(degree=10, include_bias=False)
+        poly_features1 = PolynomialFeatures(degree=6, include_bias=False)
         X_poly1 = poly_features1.fit_transform(X1)
         model1 = LinearRegression()
         model1.fit(X_poly1, y1)
-        return model,poly_features,model1,poly_features1
+        return model,poly_features, model1,poly_features1
     def KPA_rotation_angle(self, input_road_steer):
         # input_road_steer = np.array([input_road_steer]).reshape(-1, 1)
         # input_road_steer = reference.model[1].fit_transform(input_road_steer)
         # return (reference.model[0].predict(input_road_steer))[0]
-        return fsolve(lambda x: self.helperroadsteer(x) - input_road_steer, x0=[input_road_steer])[0] 
+        if np.abs(input_road_steer)<1e-3:
+                return 0
+        val = input_road_steer
+        input_road_steer = np.array([input_road_steer]).reshape(-1, 1)
+        input_road_steer = self.model[1].fit_transform(input_road_steer)
+        guess = (self.model[0].predict(input_road_steer))[0]
+        return fsolve(lambda x: self.helperroadsteer(x) - val, x0=[guess])[0] 
     def rack_vs_road_steer(self, input_road_steer):
         return self.rack_displacement(self.KPA_rotation_angle(input_road_steer))
 
@@ -958,9 +961,9 @@ class Vehicle:
             input_rack_stroke = np.array([input_rack_stroke]).reshape(-1, 1)
             input_rack_stroke = self.model[3].fit_transform(input_rack_stroke)
             guess = (self.model[2].predict(input_rack_stroke))[0]
-            return fsolve(lambda x: self.helperrack(x) - val, x0=[guess], xtol=0.01, factor = 5)[0]
+            return fsolve(lambda x: self.helperrack(x) - val, x0=[guess])[0]
         except Exception as error:
-            # Log the error and adjust theta by subtracting 0.01
+            # Log the error and adjust theta by adding 0.05
             print(f"Error encountered at rack displacement = {input_rack_stroke}: {error}. Retrying with rack displacement = {input_rack_stroke + 0.05}")
             return self.KPA_rotation_angle_vs_rack(input_rack_stroke + 0.05)
         return (reference.model[2].predict(input_rack_stroke))[0]
@@ -1359,6 +1362,7 @@ class Vehicle:
             reference.slipangles[i+1][1] =temp[5]
     # --- Kingpin Moment Calulations ---
     def kpm_circular(self, theta):
+        self.dynamic_analysis = 0
         reference = self.reference()
         self.curr_KPA_angle = theta
         reference.currKPA = (self.curr_A(theta)-self.curr_K(theta))/Vehicle.magnitude(reference.r_A-reference.r_K)
