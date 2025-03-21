@@ -1605,7 +1605,7 @@ class Vehicle:
         # Parameters
         I_w = self.I_w  # Moment of Inertia of the wheel wrt the Kingpin Axis
         I_ss = self.I_ss  # Moment of Interia of the steering system wrt the steering column
-        c_factor = 2*np.pi*self.pinion
+        c_factor = 2*np.pi*reference.pinion
         y0 = self.rack_stroke/c_factor*360  # Initial condition for y
         v0 = 0.0  # Initial condition for y'
         # t_span = (0, 0.1)  # Time range
@@ -1641,6 +1641,11 @@ class Vehicle:
         plt.legend()
         plt.show()
         return (y0-y[-1])/y0*100
+    def steering_wheel_kpa_ratio(self, curr_KPA_angle):
+        if np.abs(curr_KPA_angle)<0.2:
+            return self.steering_wheel_kpa_ratio(0.2)
+        reference = self.reference()
+        return -1/((curr_KPA_angle)/self.rack_displacement(curr_KPA_angle)*2*np.pi*reference.pinion/360)
     def wheel_system(self, t, Y, k):
         self.dynamic_analysis = 1
         reference = self.reference()
@@ -1655,12 +1660,12 @@ class Vehicle:
             factor = 0
             #dy2_dt = 0  # Default initialization
             print(f"Optimal parameters: y1 = {y1}, t = {t}")
-        dy2_dt = -factor*(self.left_plus_right_returning_moment(angle) - 2*friction)/ 2/ k * self.steering_ratio(angle)
+        dy2_dt = -factor*(self.left_plus_right_returning_moment(angle) - 2*friction)/ 2/ k * self.steering_wheel_kpa_ratio(angle)
         #  extra torque from spring calculatioins
         # if angle>-35:
-        #       dy2_dt = -factor*(self.left_plus_right_returning_moment(angle) - 2*friction)/ 2/ k * self.steering_ratio(angle)
+        #       dy2_dt = -factor*(self.left_plus_right_returning_moment(angle) - 2*friction)/ 2/ k * self.steering_wheel_kpa_ratio(angle)
         # else:
-        #       dy2_dt = -factor*(self.left_plus_right_returning_moment(angle)-0.3*6*(angle+35) - 2*friction)/ 2/ k * self.steering_ratio(angle)
+        #       dy2_dt = -factor*(self.left_plus_right_returning_moment(angle)-0.3*6*(angle+35) - 2*friction)/ 2/ k * self.steering_wheel_kpa_ratio(angle)
         #  print   (dy2_dt, angle)
         return [dy1_dt, dy2_dt]
     def steering_system(self,t,Y,k):
