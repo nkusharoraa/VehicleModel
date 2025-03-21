@@ -967,7 +967,7 @@ class Vehicle:
             return fsolve(lambda x: self.helperrack(x) - val, x0=[guess], xtol = 0.001)[0]
         except Exception as error:
             # Log the error and adjust theta by adding 0.01
-            print(f"Error encountered at rack displacement = {val}: {error}. Retrying with rack displacement = {val + 0.01}")
+            print(f"[Ignore] Error encountered at rack displacement = {val}: {error}. Retrying with rack displacement = {val + 0.01}")
             return self.KPA_rotation_angle_vs_rack(val - 0.01)
         return (reference.model[2].predict(input_rack_stroke))[0]
        
@@ -1328,7 +1328,7 @@ class Vehicle:
             angle = angle - 1
             temp = self.dynamicsolve(angle)
             loc = np.abs(np.abs(int(angle)))
-            print(f"Slip Angles Training at a Kingpin Rotation Angle of = {angle}")
+            print(f"Slip Angles Training at a Kingpin Rotation Angle of {angle} deg")
             self.Flguess[loc] = temp[0]
             self.Frguess[loc] = temp[1]
             self.Rlguess[loc] = temp[2]
@@ -1605,7 +1605,8 @@ class Vehicle:
         # Parameters
         I_w = self.I_w  # Moment of Inertia of the wheel wrt the Kingpin Axis
         I_ss = self.I_ss  # Moment of Interia of the steering system wrt the steering column
-        y0 = self.rack_stroke/37.71*360  # Initial condition for y
+        c_factor = 2*np.pi*self.pinion
+        y0 = self.rack_stroke/c_factor*360  # Initial condition for y
         v0 = 0.0  # Initial condition for y'
         # t_span = (0, 0.1)  # Time range
         # t_eval = np.linspace(t_span[0], t_span[1], 150)  # Time points to evaluate
