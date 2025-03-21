@@ -90,6 +90,22 @@ class Vehicle:
         reference = self.reference()
         self.model = self.regression_model()
         self.rack_stroke = self.rack_vs_road_steer(reference.dila - toe_in)
+        
+        self.slipangles = np.zeros((50, 2))
+        self.slipangles[0] = np.array([0,0])
+        self.Flguess = np.zeros((50))
+        self.Frguess = np.zeros((50))
+        self.Rlguess = np.zeros((50))
+        self.Rrguess = np.zeros((50))
+        a = wb - b
+        self.Flguess[3] = GVW*b/(a+b)*0.5
+        self.Frguess[3] = GVW*b/(a+b)*0.5
+        self.Rlguess[3] = GVW*a/(a+b)*0.5
+        self.Rrguess[3] = GVW*a/(a+b)*0.5
+        self.patch_radius_left = 0
+        self.patch_radius_right = 0
+        self.tempdynamicsolution = np.zeros(12)
+        self.tempdynamictheta = 0
         self.trainslipangles()
         self.linkage_friction_contribution_on_kpm = linkage_kpm
         self.linkage_friction_contribution_on_steering = linkage_effort   
@@ -188,20 +204,7 @@ class Vehicle:
         
         obj.speed = speed*5/18 #m/s
         obj.CG_height = CG_height
-        obj.slipangles = np.zeros((50, 2))
-        obj.slipangles[0] = np.array([0.0,0.0])
-        obj.Flguess = np.zeros((50))
-        obj.Frguess = np.zeros((50))
-        obj.Rlguess = np.zeros((50))
-        obj.Rrguess = np.zeros((50))
-        obj.Flguess[0] = obj.GVW*obj.b/(obj.a+obj.b)*0.5
-        obj.Frguess[0] = obj.GVW*obj.b/(obj.a+obj.b)*0.5
-        obj.Rlguess[0] = obj.GVW*obj.a/(obj.a+obj.b)*0.5
-        obj.Rrguess[0] = obj.GVW*obj.a/(obj.a+obj.b)*0.5
-        obj.patch_radius_left = 0
-        obj.patch_radius_right = 0
-        obj.tempdynamicsolution = np.zeros(12)
-        obj.tempdynamictheta = 0
+
 
 
         return obj        
@@ -671,7 +674,7 @@ class Vehicle:
             if(reference.dpB[position_to_add][0]<reference.r_B[0]/1000000000):
                 self.old_B = Vehicle.rotation(reference.dpB[position_to_add-int(np.sign(curr_KPA_angle))].tolist(), self.curr_A(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(),self.curr_K(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(), np.sign(curr_KPA_angle)*reference.step)
                 self.old_T = Vehicle.rotation(reference.dpT[position_to_add-int(np.sign(curr_KPA_angle))].tolist(), self.curr_A(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(),self.curr_K(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(), np.sign(curr_KPA_angle)*reference.step)
-                [t] = fsolve(self.solveT, [0.1])
+                [t] = fsolve(self.solveT, [0.01], xtol = 0.001)
                 reference.dpB[position_to_add] = Vehicle.rotation(
                     self.old_B.tolist(),
                     self.fvsa_ic(curr_KPA_angle - np.sign(curr_KPA_angle) * reference.step).tolist(),
@@ -681,7 +684,7 @@ class Vehicle:
             return reference.dpB[position_to_add]
         self.old_T = Vehicle.rotation(reference.dpT[position_to_add].tolist(), self.curr_A(rounded_value).tolist(),self.curr_K(rounded_value).tolist(), shift)
         self.old_B = Vehicle.rotation(reference.dpB[position_to_add].tolist(), self.curr_A(rounded_value).tolist(),self.curr_K(rounded_value).tolist(), shift)
-        [t] = fsolve(self.solveT, [0.01])
+        [t] = fsolve(self.solveT, [0.01], xtol = 0.001)
         temp = Vehicle.rotation(
             self.old_B.tolist(),
             self.fvsa_ic(rounded_value).tolist(),
@@ -723,7 +726,7 @@ class Vehicle:
                 self.old_T = Vehicle.rotation(reference.dpT[position_to_add-int(np.sign(curr_KPA_angle))].tolist(), self.curr_A(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(),self.curr_K(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(), np.sign(curr_KPA_angle)*reference.step)
                 self.old_W = Vehicle.rotation(reference.dpW[position_to_add-int(np.sign(curr_KPA_angle))].tolist(), self.curr_A(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(),self.curr_K(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(), np.sign(curr_KPA_angle)*reference.step)
                 
-                [t] = fsolve(self.solveT, [0.01])
+                [t] = fsolve(self.solveT, [0.01], xtol = 0.001)
                 
                 tempW = Vehicle.rotation(
                     self.old_W.tolist(),
@@ -961,11 +964,11 @@ class Vehicle:
             input_rack_stroke = np.array([input_rack_stroke]).reshape(-1, 1)
             input_rack_stroke = self.model[3].fit_transform(input_rack_stroke)
             guess = (self.model[2].predict(input_rack_stroke))[0]
-            return fsolve(lambda x: self.helperrack(x) - val, x0=[guess])[0]
+            return fsolve(lambda x: self.helperrack(x) - val, x0=[guess], xtol = 0.001)[0]
         except Exception as error:
-            # Log the error and adjust theta by adding 0.05
-            print(f"Error encountered at rack displacement = {input_rack_stroke}: {error}. Retrying with rack displacement = {input_rack_stroke + 0.05}")
-            return self.KPA_rotation_angle_vs_rack(input_rack_stroke + 0.05)
+            # Log the error and adjust theta by adding 0.01
+            print(f"Error encountered at rack displacement = {val}: {error}. Retrying with rack displacement = {val + 0.01}")
+            return self.KPA_rotation_angle_vs_rack(val - 0.01)
         return (reference.model[2].predict(input_rack_stroke))[0]
        
     def road_steer_vs_rack(self, input_rack_stroke):
@@ -1220,16 +1223,15 @@ class Vehicle:
             b = reference.b
             W = reference.GVW
             t = reference.tw
-            if(theta<=0):
+            if(theta<=-4):
                 loc = -int(int(theta))
-                limits = reference.slipangles[loc-1]
-                Flguess = reference.Flguess[loc-1]
-                Frguess = reference.Frguess[loc-1]
-                Rlguess = reference.Rlguess[loc-1]
-                Rrguess = reference.Rrguess[loc-1]
+                limits = self.slipangles[loc-1]
+                Flguess = self.Flguess[loc-1]
+                Frguess = self.Frguess[loc-1]
+                Rlguess = self.Rlguess[loc-1]
+                Rrguess = self.Rrguess[loc-1]
                 self.curr_KPA_angle = theta
-                Fhalf = W*b/(a+b)*0.5
-                Rhalf = W*a/(a+b)*0.5
+
                 # Fl,Fr,Rl,Rr = self.staticsolve(theta)
                 # inner_angle = np.abs(self.road_steer(theta))
                 # outer_angle = np.abs(self.road_steer_vs_rack(-self.rack_displacement(theta)))
@@ -1244,12 +1246,12 @@ class Vehicle:
                 # Frguess = W*b/(a+b)*0.5
                 # Rlguess = W*a/(a+b)*0.5
                 # Rrguess = W*a/(a+b)*0.5
-                # if (reference.Flguess[int(-theta-1)]!=0):
-                #     Flguess = reference.Flguess[int(-theta-1)]
-                #     Frguess = reference.Frguess[int(-theta-1)]
-                #     Rlguess = reference.Rlguess[int(-theta-1)]
-                #     Rrguess = reference.Rrguess[int(-theta-1)]
-                [Fl,Fr,Rl,Rr, alphafL, alphafR] = (fsolve(self.dynamicequation, [Flguess, Frguess, Rlguess, Rrguess, limits[0], limits[1]], xtol=1e-3))
+                # if (self.Flguess[int(-theta-1)]!=0):
+                #     Flguess = self.Flguess[int(-theta-1)]
+                #     Frguess = self.Frguess[int(-theta-1)]
+                #     Rlguess = self.Rlguess[int(-theta-1)]
+                #     Rrguess = self.Rrguess[int(-theta-1)]
+                [Fl,Fr,Rl,Rr, alphafL, alphafR] = (fsolve(self.dynamicequation, [Flguess, Frguess, Rlguess, Rrguess, limits[0], limits[1]], xtol=0.01))
                 # [Fl,Fr,Rl,Rr, alphafL, alphafR] = (fsolve(self.dynamicequation,[Fhalf,Fhalf,Rhalf,Rhalf,limits[0],limits[1]], xtol=0.001))
                 
                 # Fl = reference.Kf*zfl
@@ -1274,53 +1276,24 @@ class Vehicle:
                 alpharL = np.rad2deg(np.atan(tan_alpharL))
                 alpharR = np.rad2deg(np.atan(tan_alpharR))
             else:
-                opposite_rack_travel = -self.rack_displacement(theta)
-                theta = self.KPA_rotation_angle_vs_rack(opposite_rack_travel)
-                loc = -int(int(theta))
-                limits = reference.slipangles[loc]
-                self.curr_KPA_angle = theta
-                # Fhalf = reference.GVW*reference.b/(reference.a+reference.b)*0.5
-                # Rhalf = reference.GVW*reference.a/(reference.a+reference.b)*0.5
-                Flguess = reference.GVW*reference.b/(reference.a+reference.b)*0.5
-                Frguess = reference.GVW*reference.b/(reference.a+reference.b)*0.5
-                Rlguess = reference.GVW*reference.a/(reference.a+reference.b)*0.5
-                Rrguess = reference.GVW*reference.a/(reference.a+reference.b)*0.5
-                if (reference.Flguess[int(theta-1)]!=0):
-                    Flguess = reference.Flguess[int(theta-1)]
-                    Frguess = reference.Frguess[int(theta-1)]
-                    Rlguess = reference.Rlguess[int(theta-1)]
-                    Rrguess = reference.Rrguess[int(theta-1)]
-                [Fl,Fr,Rl,Rr, alphafL, alphafR] = (fsolve(self.dynamicequation, [Flguess, Frguess, Rlguess, Rrguess, limits[0], limits[1]], xtol=1e-4, maxfev=5000))
-                # Fl,Fr,Rl,Rr = self.staticsolve(theta)
-                # inner_angle = np.abs(self.road_steer(theta))
-                # outer_angle = np.abs(self.road_steer_vs_rack(-self.rack_displacement(theta)))
-                # max_angle = np.maximum(inner_angle, outer_angle)
-                # Rad = self.tcr(outer_angle + inner_angle - max_angle, max_angle)
-                # initial_CF = Fhalf/g*reference.speed**2/Rad*1000*np.sin(np.radians((inner_angle + outer_angle)/2))
-                # initial_CR = Rhalf/g*reference.speed**2/Rad*1000*np.sin(np.radians((inner_angle + outer_angle)/2))
-                # initial_alphaf = np.rad2deg(initial_CF/2000*g) #np.sin(1.2*np.radians(alphafL) + 0.8*(np.radians(alphafL) - np.atan(1.2*np.radians(alphafL))))
-                # initial_alphar = np.rad2deg(initial_CR/2000*g)
-                # [Fl,Fr,Rl,Rr, alphafL, alphafR] = (fsolve(self.dynamicequation,[Fhalf,Fhalf,Rhalf,Rhalf,limits[0],limits[1]], xtol=0.001))
-                # Fl = reference.Kf*zfl
-                # Fr = reference.Kf*zfr
-                # Rl = reference.Kr*zrl
-                # Rr = reference.Kr*zrr
-                theta = self.curr_KPA_angle
-                thetaL = np.abs(self.road_steer(self.KPA_rotation_angle_vs_rack(-self.rack_displacement(theta))))
-                thetaR = np.abs(self.road_steer(theta))
-                theta2 = np.radians(thetaR - alphafR)
-                theta1 = np.radians(thetaL - alphafL)
-                OP1 = np.sin(theta2)*t/np.sin(theta2 - theta1)
-                OP2 = np.sin(theta1)*t/np.sin(theta2 - theta1)
-                OG = np.sqrt(t**2/4 + OP2**2 + 2*t/2*OP2*np.cos(theta2))
-                sin_tau = np.sin(theta2)/OG*OP2
-                cos_tau = np.sqrt(1-sin_tau**2)
-                R = np.sqrt(a**2 + OG**2 - 2*a*OG*sin_tau)
-                
-                tan_alpharL = ((a+b)/OP1 - np.sin(theta1))/np.cos(theta1)
-                tan_alpharR = ((a+b)/OP2 - np.sin(theta2))/np.cos(theta2)
-                alpharL = np.rad2deg(np.atan(tan_alpharL))
-                alpharR = np.rad2deg(np.atan(tan_alpharR))
+                Fhalf = W*b/(a+b)*0.5
+                Rhalf = W*a/(a+b)*0.5
+                tempsol = self.dynamicsolve(-4)
+                Fl,Fr,Rl,Rr, alphafL, alphafR, alpharL, alpharR, CFL, CFR, CRL, CRR, SAT = tempsol[0], tempsol[1], tempsol[2], tempsol[3], tempsol[4], tempsol[5], tempsol[6], tempsol[7], tempsol[8], tempsol[9], tempsol[10], tempsol[11], tempsol[12]
+                Fl = Fhalf + np.abs(theta)*(Fl - Fhalf)/4
+                Fr = Fhalf + np.abs(theta)*(Fr - Fhalf)/4
+                Rl = Rhalf + np.abs(theta)*(Rl - Rhalf)/4
+                Rr = Rhalf + np.abs(theta)*(Rr - Rhalf)/4
+                alphafL = np.abs(theta)*(alphafL)/4
+                alphafR = np.abs(theta)*(alphafR)/4
+                alpharL = np.abs(theta)*(alpharL)/4
+                alpharR = np.abs(theta)*(alpharR)/4
+                CFL = np.abs(theta)*(CFL)/4
+                CFR = np.abs(theta)*(CFR)/4
+                CRL = np.abs(theta)*(CRL)/4
+                CRR = np.abs(theta)*(CRR)/4
+                SAT = (np.abs(theta)*SAT[0]/4, np.abs(theta)*SAT[1]/4)
+                return Fl,Fr,Rl,Rr, alphafL, alphafR, alpharL, alpharR, CFL, CFR, CRL, CRR, SAT
             B = reference.tiredata[0]
             C = reference.tiredata[1]
             D = reference.tiredata[2]
@@ -1344,22 +1317,24 @@ class Vehicle:
             return Fl,Fr,Rl,Rr, alphafL, alphafR, alpharL, alpharR, CFL, CFR, CRL, CRR, SAT
         except Exception as error:
             # Log the error and adjust theta by subtracting 0.01
-            print(f"Error encountered at theta = {theta}: {error}. Retrying with theta = {theta - 0.01}")
-            return self.dynamicsolve(theta - 0.01)
+            print(f"Error encountered at theta = {theta}: {error}. Retrying with theta = {theta + 0.01}")
+            return self.dynamicsolve(theta + 0.01)
 
     def trainslipangles(self):
         self.dynamic_analysis = 1
         reference = self.reference()
-        angle = 0
-        for i in range(49):
+        angle = -3
+        for i in range(49 - np.abs(int(angle))):
             angle = angle - 1
             temp = self.dynamicsolve(angle)
-            reference.Flguess[i+1] = temp[0]
-            reference.Frguess[i+1] = temp[1]
-            reference.Rlguess[i+1] = temp[2]
-            reference.Rrguess[i+1] = temp[3]
-            reference.slipangles[i+1][0] = temp[4]
-            reference.slipangles[i+1][1] =temp[5]
+            loc = np.abs(np.abs(int(angle)))
+            print(f"Slip Angles Training at a Kingpin Rotation Angle of = {angle}")
+            self.Flguess[loc] = temp[0]
+            self.Frguess[loc] = temp[1]
+            self.Rlguess[loc] = temp[2]
+            self.Rrguess[loc] = temp[3]
+            self.slipangles[loc][0] = temp[4]
+            self.slipangles[loc][1] = temp[5]
     # --- Kingpin Moment Calulations ---
     def kpm_circular(self, theta):
         self.dynamic_analysis = 0
@@ -1419,7 +1394,7 @@ class Vehicle:
         theta = self.curr_KPA_angle
         distance = self.curr_T(theta)+np.array([r*np.cos(phi),r*np.sin(phi),0])-reference.r_I
         #Vehicle.linear_interpolation(self.delta_z(self.curr_KPA_angle))
-        temp = reference.tempdynamicsolution
+        temp = self.tempdynamicsolution
         thetaL = np.abs(self.road_steer(self.KPA_rotation_angle_vs_rack(-self.rack_displacement(theta))))
         thetaR = np.abs(self.road_steer(theta))
         alphafL = temp[4]
@@ -1439,7 +1414,7 @@ class Vehicle:
         theta = self.curr_KPA_angle
         distance = self.curr_T(theta)+np.array([r*np.cos(phi),r*np.sin(phi),0])-reference.r_I
         #Vehicle.linear_interpolation(self.delta_z(self.curr_KPA_angle))
-        temp = reference.tempdynamicsolution
+        temp = self.tempdynamicsolution
         thetaL = np.abs(self.road_steer(self.KPA_rotation_angle_vs_rack(-self.rack_displacement(theta))))
         thetaR = np.abs(self.road_steer(theta))
         alphafL = temp[4]
@@ -1480,20 +1455,20 @@ class Vehicle:
         if (theta>0):
             theta = self.KPA_rotation_angle_vs_rack(-self.rack_displacement(theta))
             return self.kpm_circular_dynamic_right(theta)
-        if (reference.tempdynamictheta != theta):
-            reference.tempdynamictheta = theta    
-            reference.tempdynamicsolution = self.dynamicsolve(theta)
+        if (self.tempdynamictheta != theta):
+            self.tempdynamictheta = theta    
+            self.tempdynamicsolution = self.dynamicsolve(theta)
         self.curr_KPA_angle = theta
         reference.currKPA = (self.curr_A(theta)-self.curr_K(theta))/Vehicle.magnitude(reference.r_A-reference.r_K)
         t = theta
-        patch_radius = np.sqrt(reference.tempdynamicsolution[0]*reference.g/np.pi/reference.tirep/6894.75729)
+        patch_radius = np.sqrt(self.tempdynamicsolution[0]*reference.g/np.pi/reference.tirep/6894.75729)
         self.patch_radius_left = patch_radius
         temp = integrate.dblquad(self.dynamic_element_moment_circular_left, 0, 2*np.pi, 0, 1000*patch_radius)[0]/10**9
         # temp2 = integrate.dblquad(self.tire_twisting_moment_circular, 0, 2*np.pi, 0, 1000*patch_radius)[0]/10**9
         if 0==self.curr_KPA_angle:
             return temp
-        # friction_contribution = self.helper_return(theta, reference.tempdynamicsolution[0])
-        sat_contribution =  - np.sign(theta)*np.abs(np.dot(np.array([0,0,reference.tempdynamicsolution[12][0]]),reference.currKPA))
+        # friction_contribution = self.helper_return(theta, self.tempdynamicsolution[0])
+        sat_contribution =  - np.sign(theta)*np.abs(np.dot(np.array([0,0,self.tempdynamicsolution[12][0]]),reference.currKPA))
         # print(sat_contribution)
         # print(friction_contribution)
         return temp + sat_contribution # + friction_contribution # + temp2*np.sign(theta) #np.dot(np.cross(moment_arm, total_force), KPA) + temp #+kpm_tp(curr_KPA_angle)
@@ -1505,19 +1480,19 @@ class Vehicle:
         if (theta>0):
             theta = self.KPA_rotation_angle_vs_rack(-self.rack_displacement(theta))
             return self.kpm_circular_dynamic_left(theta)
-        if (reference.tempdynamictheta != theta):  
-            reference.tempdynamictheta = theta     
-            reference.tempdynamicsolution = self.dynamicsolve(theta)
+        if (self.tempdynamictheta != theta):  
+            self.tempdynamictheta = theta     
+            self.tempdynamicsolution = self.dynamicsolve(theta)
         self.curr_KPA_angle = theta
         reference.currKPA = (self.curr_A(theta)-self.curr_K(theta))/Vehicle.magnitude(reference.r_A-reference.r_K)
         t = theta
-        patch_radius = np.sqrt(reference.tempdynamicsolution[1]*reference.g/np.pi/reference.tirep/6894.75729)
+        patch_radius = np.sqrt(self.tempdynamicsolution[1]*reference.g/np.pi/reference.tirep/6894.75729)
         self.patch_radius_right = patch_radius
         temp = integrate.dblquad(self.dynamic_element_moment_circular_right, 0, 2*np.pi, 0, 1000*patch_radius)[0]/10**9
         # temp2 = integrate.dblquad(self.tire_twisting_moment_circular, 0, 2*np.pi, 0, 1000*patch_radius)[0]/10**9
         if 0==self.curr_KPA_angle:
             return temp
-        return temp - np.sign(theta)*np.abs(np.dot(np.array([0,0,reference.tempdynamicsolution[12][1]]),reference.currKPA)) #+ self.helper_return(theta, reference.tempdynamicsolution[1]) #+ # temp2*np.sign(theta) #np.dot(np.cross(moment_arm, total_force), KPA) + temp #+kpm_tp(curr_KPA_angle)
+        return temp - np.sign(theta)*np.abs(np.dot(np.array([0,0,self.tempdynamicsolution[12][1]]),reference.currKPA)) #+ self.helper_return(theta, self.tempdynamicsolution[1]) #+ # temp2*np.sign(theta) #np.dot(np.cross(moment_arm, total_force), KPA) + temp #+kpm_tp(curr_KPA_angle)
        
     def static_kingpin_moment(self, curr_KPA_angle):
         return self.kpm_circular(curr_KPA_angle)
@@ -1552,8 +1527,8 @@ class Vehicle:
         reference.currKPA = (self.curr_A(curr_KPA_angle)-self.curr_K(curr_KPA_angle))/Vehicle.magnitude(reference.r_A-reference.r_K)
         raw_left = self.kpm_circular_dynamic_right(curr_KPA_angle)
         raw_right = self.kpm_circular_dynamic_left(curr_KPA_angle)
-        friction_contribution_left = self.helper_return(curr_KPA_angle, reference.tempdynamicsolution[0])
-        friction_contribution_right = self.helper_return(curr_KPA_angle, reference.tempdynamicsolution[1])
+        friction_contribution_left = self.helper_return(curr_KPA_angle, self.tempdynamicsolution[0])
+        friction_contribution_right = self.helper_return(curr_KPA_angle, self.tempdynamicsolution[1])
         return raw_left + raw_right + friction_contribution_left + friction_contribution_right
     # --- Steering Effort ---
     def tierod_force(self, curr_KPA_angle):
