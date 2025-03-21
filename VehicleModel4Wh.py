@@ -998,6 +998,14 @@ class Vehicle:
         R = np.sqrt(a**2 + OG**2 - 2*a*OG*sin_tau)
         # OG = t/2*np.sin(theta2)/np.sin((theta2-theta1)/2)
         return R/1000 #np.sqrt(a**2+OG**2-2*a*OG*np.sin(theta1/2+theta2/2)**2)
+    def ccr(self, outer_angle, inner_angle):
+        reference = self.reference()
+        a = reference.a
+        t = reference.tw
+        theta1 = np.radians(outer_angle)
+        theta2 = np.radians(inner_angle)
+        OP1 = np.sin(theta2)*t/np.sin(theta2 - theta1)
+        return OP1/1000 #np.sqrt(a**2+OG**2-2*a*OG*np.sin(theta1/2+theta2/2)**2)
     # --- Tire Contact Patch positions: x_L, x_R, y_L, y_R ---
     def delta_T(self, curr_KPA_angle):
         reference = self.reference()
