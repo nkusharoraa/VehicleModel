@@ -2,7 +2,7 @@
 
 ## Repository Link
 
-[Vehicle Design](https://github.com/nkusharoraa/VehicleDesign)
+[Vehicle Model](https://github.com/nkusharoraa/VehicleModel)
 
 ## Project Overview
 
