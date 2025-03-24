@@ -195,3 +195,10 @@ Ensure you have the following libraries installed:
 ```bash
 pip install numpy scipy matplotlib
 ```
+### How to Use
+
+Example:
+
+```bash
+from Instances.QUTE_CNG35_Kerb import instance as QUTE_CNG35_Kerb
+```
