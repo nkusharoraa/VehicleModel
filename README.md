@@ -2,7 +2,7 @@
 
 ## Repository Link
 
-[Steering Design](https://github.com/nkusharoraa/SteeringDesign)
+[Vehicle Design](https://github.com/nkusharoraa/VehicleDesign)
 
 ## Project Overview
 
