@@ -55,7 +55,7 @@ class Vehicle:
              r_strut: np.array = np.array([0, 0, 0]),
              r_Ua: np.array = np.array([0, 0, 0]),
              r_Ub: np.array = np.array([0, 0, 0]),
-             mu : float = 0.4,
+             mu : float = 0.5,
              g : float = 9.8,
              speed: float = 10.0,
              linkage_effort: float = 1.36, # Nm
@@ -70,14 +70,18 @@ class Vehicle:
         # Create static object
         # ulr - (ulr-slr)/load_rating
 
+        # self.mu_factor_s = 0.89
+        self.mu_factor_d = 1.2
+        self.CF_Factor = 1
+        self.align_factor = 1
         self.static = Vehicle.create_object(r_A, r_B, r_C, r_O, r_K, slr, initial_camber, toe_in, tw, wb, GVW, b, 
                                           CG_height, wheel_rate_f, wheel_rate_r, tire_stiffness_f, tire_stiffness_r,
-                                          pinion, tirep, dila, r_La, r_Lb, r_strut, r_Ua, r_Ub, mu, g, tiredata, speed)
+                                          pinion, tirep, dila, r_La, r_Lb, r_strut, r_Ua, r_Ub, 0.5, g, tiredata, speed)
 
         # Create dynamic object 
         self.dynamic = Vehicle.create_object(r_A, r_B, r_C, r_O, r_K, dlr, initial_camber, toe_in, tw, wb, GVW, b,
                                            CG_height, wheel_rate_f, wheel_rate_r, tire_stiffness_f, tire_stiffness_r,
-                                           pinion, tirep, dila, r_La, r_Lb, r_strut, r_Ua, r_Ub, mu, g, tiredata, speed)
+                                           pinion, tirep, dila, r_La, r_Lb, r_strut, r_Ua, r_Ub, 0.4, g, tiredata, speed)
         # Initialize common parameters
         self.I_w = I_w
         self.I_ss = I_ss
@@ -842,7 +846,8 @@ class Vehicle:
     # --- Caster Trail, Scrub Radius and Spindle Length ---
     def trails(self, curr_KPA_angle):
         reference = self.reference()
-        return self.curr_T(curr_KPA_angle)-reference.r_I
+        temp = Vehicle.projection(reference.r_A,reference.currKPA,reference.r_I)
+        return self.curr_T(curr_KPA_angle)- temp #reference.r_I
     def caster_trail(self, curr_KPA_angle):
         head = self.wheel_heading(curr_KPA_angle)
         mag = Vehicle.magnitude(head)
@@ -1181,21 +1186,27 @@ class Vehicle:
         D = reference.tiredata[2]
         E = reference.tiredata[3]
         CF_Loads = self.CF_Loads # np.array([0, 150, 200, 250, 500])
-        CF_Stiffnessrad= self.CF_Stiffnessrad # np.array([0, 20234.57749,	23031.75745, 24629.16378, 24629.16378 + 250*(24629.16378-23031.75745)/50])
+        CF_Stiffnessrad= self.CF_Stiffnessrad*self.CF_Factor # np.array([0, 20234.57749,	23031.75745, 24629.16378, 24629.16378 + 250*(24629.16378-23031.75745)/50])
         interpolator = interp1d(CF_Loads, CF_Stiffnessrad, kind='linear')
         Cfl = interpolator(Fl)
         Cfr = interpolator(Fr)
         Crl = interpolator(Rl)
         Crr = interpolator(Rr)
-        alphafLprime = Cfl/g*np.tan(np.radians(alphafL))/mu/Fl
-        alphafRprime = Cfr/g*np.tan(np.radians(alphafR))/mu/Fr
-        alpharLprime = Crl/g*np.tan(np.radians(alpharL))/mu/Rl
-        alpharRprime = Crr/g*np.tan(np.radians(alpharR))/mu/Rr
+        kvals = np.array([0, 0.869265306, 0.86251895, 0.824704082, 0.785904762, 0.777771429, 0.736252639, 0.714276295, 0.714276295])
+        interpolator1 = interp1d(CF_Loads, kvals, kind='linear')
+        mufl = interpolator1(Fl)
+        mufr = interpolator1(Fr)
+        murl = interpolator1(Rl)
+        murr = interpolator1(Rr)
+        alphafLprime = Cfl/g*np.tan(np.radians(alphafL))/mufl/Fl
+        alphafRprime = Cfr/g*np.tan(np.radians(alphafR))/mufr/Fr
+        alpharLprime = Crl/g*np.tan(np.radians(alpharL))/murl/Rl
+        alpharRprime = Crr/g*np.tan(np.radians(alpharR))/murr/Rr
 
-        CFL = mu*D*Fl*np.sin(C*np.atan(B*((alphafLprime) - E*(alphafLprime) +E/B*np.atan(B*(alphafLprime)))))
-        CFR = mu*D*Fr*np.sin(C*np.atan(B*((alphafRprime) - E*(alphafRprime) +E/B*np.atan(B*(alphafRprime)))))
-        CRL = mu*D*Rl*np.sin(C*np.atan(B*((alpharLprime) - E*(alpharLprime) +E/B*np.atan(B*(alpharLprime)))))
-        CRR = mu*D*Rr*np.sin(C*np.atan(B*((alpharRprime) - E*(alpharRprime) +E/B*np.atan(B*(alpharRprime)))))
+        CFL = mufl*1.00*D*Fl*np.sin(C*np.atan(B*((alphafLprime) - E*(alphafLprime) +E/B*np.atan(B*(alphafLprime)))))
+        CFR = mufr*1.00*D*Fr*np.sin(C*np.atan(B*((alphafRprime) - E*(alphafRprime) +E/B*np.atan(B*(alphafRprime)))))
+        CRL = murl*1.00*D*Rl*np.sin(C*np.atan(B*((alpharLprime) - E*(alpharLprime) +E/B*np.atan(B*(alpharLprime)))))
+        CRR = murr*1.00*D*Rr*np.sin(C*np.atan(B*((alpharRprime) - E*(alpharRprime) +E/B*np.atan(B*(alpharRprime)))))
 
         dlr = reference.tire_radius
 
@@ -1307,20 +1318,27 @@ class Vehicle:
             D = reference.tiredata[2]
             E = reference.tiredata[3]
             CF_Loads = self.CF_Loads # np.array([0, 150, 200, 250, 500])
-            CF_Stiffnessrad = self.CF_Stiffnessrad # np.array([0, 20234.57749,	23031.75745, 24629.16378, 24629.16378 + 250*(24629.16378-23031.75745)/50])
+            CF_Stiffnessrad = self.CF_Stiffnessrad*self.CF_Factor # np.array([0, 20234.57749,	23031.75745, 24629.16378, 24629.16378 + 250*(24629.16378-23031.75745)/50])
             interpolator = interp1d(CF_Loads, CF_Stiffnessrad, kind='linear')
             Cfl = interpolator(Fl)
             Cfr = interpolator(Fr)
             Crl = interpolator(Rl)
             Crr = interpolator(Rr)
-            alphafLprime = Cfl/g*np.tan(np.radians(alphafL))/mu/Fl
-            alphafRprime = Cfr/g*np.tan(np.radians(alphafR))/mu/Fr
-            alpharLprime = Crl/g*np.tan(np.radians(alpharL))/mu/Rl
-            alpharRprime = Crr/g*np.tan(np.radians(alpharR))/mu/Rr
-            CFL = mu*D*Fl*np.sin(C*np.atan(B*((alphafLprime) - E*(alphafLprime) +E/B*np.atan(B*(alphafLprime)))))
-            CFR = mu*D*Fr*np.sin(C*np.atan(B*((alphafRprime) - E*(alphafRprime) +E/B*np.atan(B*(alphafRprime)))))
-            CRL = mu*D*Rl*np.sin(C*np.atan(B*((alpharLprime) - E*(alpharLprime) +E/B*np.atan(B*(alpharLprime)))))
-            CRR = mu*D*Rr*np.sin(C*np.atan(B*((alpharRprime) - E*(alpharRprime) +E/B*np.atan(B*(alpharRprime)))))
+            kvals = np.array([0, 0.869265306, 0.86251895, 0.824704082, 0.785904762, 0.777771429, 0.736252639, 0.714276295, 0.714276295])*self.mu_factor_d
+            interpolator1 = interp1d(CF_Loads, kvals, kind='linear')
+            mufl = interpolator1(Fl)
+            mufr = interpolator1(Fr)
+            murl = interpolator1(Rl)
+            murr = interpolator1(Rr)
+            alphafLprime = Cfl/g*np.tan(np.radians(alphafL))/mufl/Fl
+            alphafRprime = Cfr/g*np.tan(np.radians(alphafR))/mufr/Fr
+            alpharLprime = Crl/g*np.tan(np.radians(alpharL))/murl/Rl
+            alpharRprime = Crr/g*np.tan(np.radians(alpharR))/murr/Rr
+
+            CFL = mufl*1.00*D*Fl*np.sin(C*np.atan(B*((alphafLprime) - E*(alphafLprime) +E/B*np.atan(B*(alphafLprime)))))
+            CFR = mufr*1.00*D*Fr*np.sin(C*np.atan(B*((alphafRprime) - E*(alphafRprime) +E/B*np.atan(B*(alphafRprime)))))
+            CRL = murl*1.00*D*Rl*np.sin(C*np.atan(B*((alpharLprime) - E*(alpharLprime) +E/B*np.atan(B*(alpharLprime)))))
+            CRR = murr*1.00*D*Rr*np.sin(C*np.atan(B*((alpharRprime) - E*(alpharRprime) +E/B*np.atan(B*(alpharRprime)))))
             SAT = self.sat(alphafL, alphafR, Fl, Fr)    
             return Fl,Fr,Rl,Rr, alphafL, alphafR, alpharL, alpharR, CFL, CFR, CRL, CRR, SAT
         except Exception as error:
@@ -1350,29 +1368,36 @@ class Vehicle:
         self.curr_KPA_angle = theta
         reference.currKPA = (self.curr_A(theta)-self.curr_K(theta))/Vehicle.magnitude(reference.r_A-reference.r_K)
         t = theta
-        normal = self.F_Rz(t)*np.array([0,0,1])/1000*reference.g
-        fric_dir = np.sign(t)*np.cross(normal,self.wheel_heading(t))
+        # normal = self.F_Rz(t)*np.array([0,0,1])/1000*reference.g
+        # fric_dir = np.sign(t)*np.cross(normal,self.wheel_heading(t))
         # friction = 0 # mu*F_Rz(t)*fric_dir/magnitude(fric_dir)/1000*g
         # moment_arm = self.curr_T(t)-reference.r_I
         # total_force = friction+normal
-        patch_radius = np.sqrt(self.F_Rz(self.curr_KPA_angle)*reference.g/np.pi/reference.tirep/6894.75729)
+        # kvals = np.array([0, 0.869265306, 0.86251895, 0.824704082, 0.785904762, 0.777771429, 0.736252639, 0.714276295, 0.714276295])*self.mu_factor_s
+        # interpolator1 = interp1d(self.CF_Loads, kvals, kind='linear')
+        normal = self.F_Rz(self.curr_KPA_angle)
+        Loads = np.array([100, 120, 190, 210, 230, 300])
+        kvals = np.array([0.6, 0.7, 0.8, 0.9, 1.0, 1.0])
+        interpolator1 = interp1d(Loads, kvals, kind='linear')
+        reference.mu = interpolator1(normal)
+        patch_radius = np.sqrt(normal*reference.g/np.pi/reference.tirep/6894.75729)
         temp = integrate.dblquad(self.tire_twisting_moment_circular_static, 0, 2*np.pi, 0, 1000*patch_radius)[0]/10**9
         if 0==self.curr_KPA_angle:
             return temp
-        return temp*np.sign(self.curr_KPA_angle) #np.dot(np.cross(moment_arm, total_force), KPA) + temp #+kpm_tp(curr_KPA_angle)
+        return temp # *np.sign(self.curr_KPA_angle) #np.dot(np.cross(moment_arm, total_force), KPA) + temp #+kpm_tp(curr_KPA_angle)
     def circular_contactpatch_element(self, r, phi):
         curr_point = self.curr_T(self.curr_KPA_angle) + np.array([r*np.cos(phi),r*np.sin(phi),0])
         return self.curr_tangent(curr_point)
     def linear_interpolation(input_value):
         """
         Linearly interpolates with increasing gradient.
-        Maps 0 to 0.2 and 50 to 0.7.
+        Maps 0 to 0.2 and 50 to 0.4.
 
         Parameters:
             input_value (float): The input value to scale.
 
         Returns:
-            float: A scaled value between 0.2 and 0.7.
+            float: A scaled value between 0.2 and 0.4.
         """
         # Ensure input_value is within the valid range
         input_value = np.maximum(-11, np.minimum(input_value, 11))
@@ -1383,24 +1408,28 @@ class Vehicle:
         return scaled_value
     def tire_twisting_moment_circular_return(self, r,phi):
         reference = self.reference()
-        distance = self.curr_T(self.curr_KPA_angle)+np.array([r*np.cos(phi),r*np.sin(phi),0])-reference.r_I
+        temp = Vehicle.projection(reference.r_A,reference.currKPA,reference.r_I)
+        distance = self.curr_T(self.curr_KPA_angle)+np.array([r*np.cos(phi),r*np.sin(phi),0]) - temp # reference.r_I
         #Vehicle.linear_interpolation(self.delta_z(self.curr_KPA_angle))
         # 
         force = reference.mu*reference.tirep*6894.75729*r*self.circular_contactpatch_element(r,phi) #+ reference.tirep*6894.75729*r*np.array([0,0,1]) #np.array([-np.sin(phi),np.cos(phi),0])
         return np.dot(np.cross(distance,force),reference.currKPA)
     def tire_twisting_moment_circular_static(self, r,phi):
         reference = self.reference()
-        distance = self.curr_T(self.curr_KPA_angle)+np.array([r*np.cos(phi),r*np.sin(phi),0])-reference.r_I
+        temp = Vehicle.projection(reference.r_A,reference.currKPA,reference.r_I)
+        distance = self.curr_T(self.curr_KPA_angle)+np.array([r*np.cos(phi),r*np.sin(phi),0]) - temp # reference.r_I
         #Vehicle.linear_interpolation(self.delta_z(self.curr_KPA_angle))
         # 
-        force = reference.mu*reference.tirep*6894.75729*r*self.circular_contactpatch_element(r,phi) + reference.tirep*6894.75729*r*np.array([0,0,1]) #np.array([-np.sin(phi),np.cos(phi),0])
+        friction =  reference.mu*reference.tirep*6894.75729*r*self.circular_contactpatch_element(r,phi)
+        force = friction*np.sign(-self.curr_KPA_angle) +  reference.tirep*6894.75729*r*np.array([0,0,1]) #np.array([-np.sin(phi),np.cos(phi),0])
         return np.dot(np.cross(distance,force),reference.currKPA)
    
     def dynamic_element_moment_circular_right(self, r,phi):
         self.dynamic_analysis = 1
         reference = self.reference()
         theta = self.curr_KPA_angle
-        distance = self.curr_T(theta)+np.array([r*np.cos(phi),r*np.sin(phi),0])-reference.r_I
+        temp = Vehicle.projection(reference.r_A,reference.currKPA,reference.r_I)
+        distance = self.curr_T(theta)+np.array([r*np.cos(phi),r*np.sin(phi),0]) - temp #reference.r_I
         #Vehicle.linear_interpolation(self.delta_z(self.curr_KPA_angle))
         temp = self.tempdynamicsolution
         thetaL = np.abs(self.road_steer(self.KPA_rotation_angle_vs_rack(-self.rack_displacement(theta))))
@@ -1414,13 +1443,16 @@ class Vehicle:
         CFL = temp[8]
         CFR = temp[9]
         patch_radius = self.patch_radius_right
-        force = CFR/np.pi/patch_radius**2*reference.g*r*right_dir + reference.tirep*6894.75729*r*np.array([0,0,1]) #- reference.mu*reference.tirep*6894.75729*r*self.circular_contactpatch_element(r,phi)
+        normal_contribution  = reference.tirep*6894.75729*r*np.array([0,0,1])
+        cornering_contribution = np.sign(-theta)*CFR/np.pi/(patch_radius**2)*reference.g*r*right_dir
+        force = cornering_contribution + normal_contribution #- reference.mu*reference.tirep*6894.75729*r*self.circular_contactpatch_element(r,phi)
         return np.dot(np.cross(distance,force),reference.currKPA)    
     def dynamic_element_moment_circular_left(self, r,phi):
         self.dynamic_analysis = 1
         reference = self.reference()
         theta = self.curr_KPA_angle
-        distance = self.curr_T(theta)+np.array([r*np.cos(phi),r*np.sin(phi),0])-reference.r_I
+        temp = Vehicle.projection(reference.r_A,reference.currKPA,reference.r_I)
+        distance = self.curr_T(theta)+np.array([r*np.cos(phi),r*np.sin(phi),0]) - temp # reference.r_I
         #Vehicle.linear_interpolation(self.delta_z(self.curr_KPA_angle))
         temp = self.tempdynamicsolution
         thetaL = np.abs(self.road_steer(self.KPA_rotation_angle_vs_rack(-self.rack_displacement(theta))))
@@ -1434,9 +1466,9 @@ class Vehicle:
         CFL = temp[8]
         CFR = temp[9]
         patch_radius = self.patch_radius_left
-        normal_contribution  = reference.tirep*6894.75729*r*np.array([0,0,1])
+        normal_contribution = -reference.tirep*6894.75729*r*np.array([0,0,1])
         
-        cornering_contribution = CFL/np.pi/patch_radius**2*reference.g*r*left_dir
+        cornering_contribution = np.sign(-theta)*CFL/np.pi/(patch_radius**2)*reference.g*r*left_dir
         # print(cornering_contribution)
         force = cornering_contribution + normal_contribution #- reference.mu*reference.tirep*6894.75729*r*self.circular_contactpatch_element(r,phi)
         return np.dot(np.cross(distance,force),reference.currKPA)
@@ -1450,6 +1482,9 @@ class Vehicle:
         # friction = 0 # mu*F_Rz(t)*fric_dir/magnitude(fric_dir)/1000*g
         # moment_arm = self.curr_T(t)-reference.r_I
         # total_force = friction+normal
+        kvals = np.array([0, 0.869265306, 0.86251895, 0.824704082, 0.785904762, 0.777771429, 0.736252639, 0.714276295, 0.714276295])*self.mu_factor_d
+        interpolator1 = interp1d(self.CF_Loads, kvals, kind='linear')
+        reference.mu = 0.4 # interpolator1(normal_force)
         patch_radius = np.sqrt(normal_force*reference.g/np.pi/reference.tirep/6894.75729)
         temp = integrate.dblquad(self.tire_twisting_moment_circular_return, 0, 2*np.pi, 0, 1000*patch_radius)[0]/10**9
         if 0==self.curr_KPA_angle:
@@ -1458,11 +1493,10 @@ class Vehicle:
     def kpm_circular_dynamic_left(self, theta):
         self.dynamic_analysis = 1
         reference = self.reference()
-        if (theta==0):
-            return 0
+        # if (theta==0):
+        #     return 0
         if (theta>0):
-            theta = self.KPA_rotation_angle_vs_rack(-self.rack_displacement(theta))
-            return self.kpm_circular_dynamic_right(theta)
+            return -self.kpm_circular_dynamic_right(-theta)
         if (self.tempdynamictheta != theta):
             self.tempdynamictheta = theta    
             self.tempdynamicsolution = self.dynamicsolve(theta)
@@ -1476,18 +1510,17 @@ class Vehicle:
         if 0==self.curr_KPA_angle:
             return temp
         # friction_contribution = self.helper_return(theta, self.tempdynamicsolution[0])
-        sat_contribution =  - np.sign(theta)*np.abs(np.dot(np.array([0,0,self.tempdynamicsolution[12][0]]),reference.currKPA))
+        sat_contribution =  np.abs(np.dot(np.array([0,0,self.tempdynamicsolution[12][0]]),reference.currKPA))
         # print(sat_contribution)
         # print(friction_contribution)
-        return temp + sat_contribution # + friction_contribution # + temp2*np.sign(theta) #np.dot(np.cross(moment_arm, total_force), KPA) + temp #+kpm_tp(curr_KPA_angle)
+        return (temp + sat_contribution) # + friction_contribution # + temp2*np.sign(theta) #np.dot(np.cross(moment_arm, total_force), KPA) + temp #+kpm_tp(curr_KPA_angle)
     def kpm_circular_dynamic_right(self, theta):
         self.dynamic_analysis = 1
         reference = self.reference()
-        if (theta==0):
-            return 0
+        # if (theta==0):
+        #     return 0
         if (theta>0):
-            theta = self.KPA_rotation_angle_vs_rack(-self.rack_displacement(theta))
-            return self.kpm_circular_dynamic_left(theta)
+            return -self.kpm_circular_dynamic_left(-theta)
         if (self.tempdynamictheta != theta):  
             self.tempdynamictheta = theta     
             self.tempdynamicsolution = self.dynamicsolve(theta)
@@ -1500,7 +1533,8 @@ class Vehicle:
         # temp2 = integrate.dblquad(self.tire_twisting_moment_circular, 0, 2*np.pi, 0, 1000*patch_radius)[0]/10**9
         if 0==self.curr_KPA_angle:
             return temp
-        return temp - np.sign(theta)*np.abs(np.dot(np.array([0,0,self.tempdynamicsolution[12][1]]),reference.currKPA)) #+ self.helper_return(theta, self.tempdynamicsolution[1]) #+ # temp2*np.sign(theta) #np.dot(np.cross(moment_arm, total_force), KPA) + temp #+kpm_tp(curr_KPA_angle)
+        sat_contribution = np.abs(np.dot(np.array([0,0,self.tempdynamicsolution[12][1]]),reference.currKPA))
+        return temp + sat_contribution #+ self.helper_return(theta, self.tempdynamicsolution[1]) #+ # temp2*np.sign(theta) #np.dot(np.cross(moment_arm, total_force), KPA) + temp #+kpm_tp(curr_KPA_angle)
        
     def static_kingpin_moment(self, curr_KPA_angle):
         return self.kpm_circular(curr_KPA_angle)
@@ -1514,20 +1548,24 @@ class Vehicle:
         D = reference.tiredata[6]
         E = reference.tiredata[7]
         CF_Loads = self.CF_Loads # np.array([0, 150, 200, 250, 500])
-        CF_Stiffnessrad = self.CF_Stiffnessrad # np.array([0, 20234.57749,	23031.75745, 24629.16378, 24629.16378 + 250*(24629.16378-23031.75745)/50])
-        CF_pneumatictrail = self.CF_pneumatictrail # np.array([0, 0.011909253,	0.018484467, 0.023331694, 0.023331694 + 250*(0.023331694-0.018484467)/50])
+        CF_Stiffnessrad = self.CF_Stiffnessrad*self.CF_Factor # np.array([0, 20234.57749,	23031.75745, 24629.16378, 24629.16378 + 250*(24629.16378-23031.75745)/50])
+        CF_pneumatictrail = self.CF_pneumatictrail*self.align_factor # np.array([0, 0.011909253,	0.018484467, 0.023331694, 0.023331694 + 250*(0.023331694-0.018484467)/50])
         interpolator = interp1d(CF_Loads, CF_Stiffnessrad, kind='linear')
         pneumaticinterpolator = interp1d(CF_Loads, CF_pneumatictrail, kind='linear')
         Cfl = interpolator(Fl)
         Cfr = interpolator(Fr)
-        alphafLprime = Cfl/g*np.tan(np.radians(alphafL))/mu/Fl
-        alphafRprime = Cfr/g*np.tan(np.radians(alphafR))/mu/Fr
+        kvals = np.array([0, 0.869265306, 0.86251895, 0.824704082, 0.785904762, 0.777771429, 0.736252639, 0.714276295, 0.714276295])*self.mu_factor_d
+        interpolator1 = interp1d(CF_Loads, kvals, kind='linear')
+        mufl = interpolator1(Fl)
+        mufr = interpolator1(Fr)
+        alphafLprime = Cfl/g*np.tan(np.radians(alphafL))/mufl/Fl
+        alphafRprime = Cfr/g*np.tan(np.radians(alphafR))/mufr/Fr
         satFLprime = D*np.sin(C*np.atan(B*((alphafLprime) - E*(alphafLprime) +E/B*np.atan(B*(alphafLprime)))))
         satFRprime = D*np.sin(C*np.atan(B*((alphafRprime) - E*(alphafRprime) +E/B*np.atan(B*(alphafRprime)))))
         TzL = pneumaticinterpolator(Fl)
         TzR = pneumaticinterpolator(Fr)
-        satFL = TzL*satFLprime*mu*Fl*g
-        satFR = TzR*satFRprime*mu*Fr*g
+        satFL = TzL*satFLprime*mufl*1.00*Fl*g
+        satFR = TzR*satFRprime*mufr*1.00*Fr*g
         return satFL, satFR
     def left_plus_right_returning_moment(self, curr_KPA_angle):
         self.dynamic_analysis = 1
@@ -1556,7 +1594,7 @@ class Vehicle:
         #     return self.tierod_force_dynamic_left(curr_KPA_angle)
         tierod = self.tierod(curr_KPA_angle)
         mag= Vehicle.magnitude(self.tierod(curr_KPA_angle))
-        reference.currKPArrKPArrKPA = (self.curr_A(curr_KPA_angle)-self.curr_K(curr_KPA_angle))/Vehicle.magnitude(reference.r_A-reference.r_K)
+        reference.currKPA = (self.curr_A(curr_KPA_angle)-self.curr_K(curr_KPA_angle))/Vehicle.magnitude(reference.r_A-reference.r_K)
         force = self.kpm_circular_dynamic_right(curr_KPA_angle)*1000/np.dot(np.cross(self.steering_arm(curr_KPA_angle),
                                                                         tierod/mag),
                                                                         reference.currKPA)*tierod/mag
@@ -1575,7 +1613,6 @@ class Vehicle:
         force = self.kpm_circular_dynamic_left(curr_KPA_angle)*1000/np.dot(np.cross(self.steering_arm(curr_KPA_angle),
                                                                         tierod/mag),
                                                                         reference.currKPA)*tierod/mag
-        force[1] = - force[1]
         return force
     def rack_force_dynamic(self, curr_KPA_angle):
         self.dynamic_analysis = 1
@@ -1586,12 +1623,13 @@ class Vehicle:
         #     curr_KPA_angle = self.KPA_rotation_angle_vs_rack(-self.rack_displacement(curr_KPA_angle))
         right_tierod_force = self.tierod_force_dynamic_right(curr_KPA_angle)
         left_tierod_force = self.tierod_force_dynamic_left(curr_KPA_angle)
-        return Vehicle.magnitude(right_tierod_force)**2/(np.dot(right_tierod_force,
-                          np.array([0,1,0]))) - Vehicle.magnitude(left_tierod_force)**2/(np.dot(left_tierod_force,
-                                                    np.array([0,1,0])))
+        return (np.dot(right_tierod_force,np.array([0,1,0]))) + (np.dot(left_tierod_force, np.array([0,1,0])))
     def rack_force(self, curr_KPA_angle):
         current_tierod_force = self.tierod_force(curr_KPA_angle)
-        opposite_tierod_force = self.tierod_force(self.KPA_rotation_angle_vs_rack(-self.rack_displacement(curr_KPA_angle)))
+        opposite_tierod_force = -self.tierod_force(self.KPA_rotation_angle_vs_rack(-self.rack_displacement(curr_KPA_angle)))
+        return (np.dot(current_tierod_force,
+                          np.array([0,1,0]))) + np.dot(opposite_tierod_force,
+                                                    np.array([0,1,0]))
         return Vehicle.magnitude(current_tierod_force)**2/(np.dot(current_tierod_force,
                           np.array([0,1,0]))) - Vehicle.magnitude(opposite_tierod_force)**2/(np.dot(opposite_tierod_force,
                                                     np.array([0,1,0])))
@@ -1606,7 +1644,7 @@ class Vehicle:
             return 0
         if(curr_KPA_angle>0):
             curr_KPA_angle = self.KPA_rotation_angle_vs_rack(-self.rack_displacement(curr_KPA_angle))
-        return np.abs(self.rack_force_dynamic(curr_KPA_angle)*reference.pinion/1000)
+        return np.abs(self.rack_force_dynamic(curr_KPA_angle)*reference.pinion/1000) + self.linkage_friction_contribution_on_steering
     def returnability(self, lim_time):
         self.dynamic_analysis = 1
         reference = self.reference()
