@@ -110,7 +110,7 @@ class Vehicle:
         self.patch_radius_right = 0
         self.tempdynamicsolution = np.zeros(12)
         self.tempdynamictheta = 0
-        self.trainslipangles()
+        # self.trainslipangles()
         self.linkage_friction_contribution_on_kpm = linkage_kpm
         self.linkage_friction_contribution_on_steering = linkage_effort   
     @classmethod
@@ -1376,8 +1376,8 @@ class Vehicle:
         # kvals = np.array([0, 0.869265306, 0.86251895, 0.824704082, 0.785904762, 0.777771429, 0.736252639, 0.714276295, 0.714276295])*self.mu_factor_s
         # interpolator1 = interp1d(self.CF_Loads, kvals, kind='linear')
         normal = self.F_Rz(self.curr_KPA_angle)
-        Loads = np.array([100, 120, 190, 210, 230, 300])
-        kvals = np.array([0.6, 0.7, 0.8, 0.9, 1.0, 1.0])
+        Loads = np.array([100, 120, 160, 180, 200, 240, 280, 300])
+        kvals = np.array([0.6, 0.6, 0.7, 0.7, 0.8, 0.9, 1.0, 1.0])
         interpolator1 = interp1d(Loads, kvals, kind='linear')
         reference.mu = interpolator1(normal)
         patch_radius = np.sqrt(normal*reference.g/np.pi/reference.tirep/6894.75729)
@@ -1420,8 +1420,13 @@ class Vehicle:
         distance = self.curr_T(self.curr_KPA_angle)+np.array([r*np.cos(phi),r*np.sin(phi),0]) - temp # reference.r_I
         #Vehicle.linear_interpolation(self.delta_z(self.curr_KPA_angle))
         # 
+        theta2 = np.radians(self.road_steer(self.curr_KPA_angle))
+        camber = self.camber(self.curr_KPA_angle)
+        right_dir = np.array([np.sin(theta2),np.cos(theta2),0])
         friction =  reference.mu*reference.tirep*6894.75729*r*self.circular_contactpatch_element(r,phi)
-        force = friction*np.sign(-self.curr_KPA_angle) +  reference.tirep*6894.75729*r*np.array([0,0,1]) #np.array([-np.sin(phi),np.cos(phi),0])
+        normal_contribution = reference.tirep*6894.75729*r*np.array([0,0,1])
+        camber_thrust = -reference.tirep*6894.75729*r*np.tan(theta2)*right_dir
+        force = friction*np.sign(-self.curr_KPA_angle) +  normal_contribution + np.sign(-self.curr_KPA_angle)*camber_thrust #np.array([-np.sin(phi),np.cos(phi),0])
         return np.dot(np.cross(distance,force),reference.currKPA)
    
     def dynamic_element_moment_circular_right(self, r,phi):
@@ -1626,7 +1631,11 @@ class Vehicle:
         return (np.dot(right_tierod_force,np.array([0,1,0]))) + (np.dot(left_tierod_force, np.array([0,1,0])))
     def rack_force(self, curr_KPA_angle):
         current_tierod_force = self.tierod_force(curr_KPA_angle)
-        opposite_tierod_force = -self.tierod_force(self.KPA_rotation_angle_vs_rack(-self.rack_displacement(curr_KPA_angle)))
+        if curr_KPA_angle + 21 < 0.5:
+            opposite_tierod_force = -self.tierod_force(19)
+        else:
+            opp_angle = np.round(self.KPA_rotation_angle_vs_rack(-self.rack_displacement(curr_KPA_angle)),1)
+            opposite_tierod_force = -self.tierod_force(opp_angle)
         return (np.dot(current_tierod_force,
                           np.array([0,1,0]))) + np.dot(opposite_tierod_force,
                                                     np.array([0,1,0]))
