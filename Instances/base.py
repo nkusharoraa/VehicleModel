@@ -16,6 +16,7 @@ class QUTE:
         self.pinion = 6
         self.tirep = 30
         self.dila = -46
+        self.assumed_rack_stroke = 53
         self.linkage_effort = 1.7
         self.linkage_kpm = 8.5
         self.I_w = 0.32 # Moment of Inertia of the Parts that rotate about the Kingpin Axis
@@ -36,6 +37,7 @@ class R129:
         self.pinion = 6
         self.tirep = 30
         self.dila = -45
+        self.assumed_rack_stroke = 54
         self.linkage_effort = 1.36
         self.linkage_kpm = 8.16
         self.I_w = 0.34 # Moment of Inertia of the Parts that rotate about the Kingpin Axis
