@@ -545,7 +545,13 @@ class Vehicle:
                 t
             )
         return reference.dpA[position_to_add]
-
+    def curr_I(self, curr_KPA_angle):
+        currK = self.curr_K(self.curr_KPA_angle)
+        currT = self.curr_T(self.curr_KPA_angle)
+        currKPA =  self.curr_KPA(self.curr_KPA_angle)
+        t = (currT[2] - currK[2]) / currKPA[2]
+        r_I = currK + t * currKPA
+        return r_I
 # --- Projection of point (x,y,z) on the plane a*x + b*y + c*z = 1 --- 
     def project_points(x, y, z, a, b, c):
         """
@@ -849,12 +855,9 @@ class Vehicle:
         return val/mag
     # --- Caster Trail, Scrub Radius and Spindle Length ---
     def trails(self, curr_KPA_angle):
-        reference = self.reference()
-        currA = self.curr_A(curr_KPA_angle)
         currT = self.curr_T(curr_KPA_angle)
-        currKPA = self.curr_KPA(curr_KPA_angle)
-        temp = Vehicle.projection(currA,currKPA,currT)
-        return currT- temp #reference.r_I
+        currI = self.curr_I(curr_KPA_angle)
+        return currT - currI 
     def caster_trail(self, curr_KPA_angle):
         head = self.wheel_heading(curr_KPA_angle)
         mag = Vehicle.magnitude(head)
@@ -1374,14 +1377,6 @@ class Vehicle:
         reference = self.reference()
         self.curr_KPA_angle = theta
         reference.currKPA = (self.curr_A(theta)-self.curr_K(theta))/Vehicle.magnitude(reference.r_A-reference.r_K)
-        t = theta
-        # normal = self.F_Rz(t)*np.array([0,0,1])/1000*reference.g
-        # fric_dir = np.sign(t)*np.cross(normal,self.wheel_heading(t))
-        # friction = 0 # mu*F_Rz(t)*fric_dir/magnitude(fric_dir)/1000*g
-        # moment_arm = self.curr_T(t)-reference.r_I
-        # total_force = friction+normal
-        # kvals = np.array([0, 0.869265306, 0.86251895, 0.824704082, 0.785904762, 0.777771429, 0.736252639, 0.714276295, 0.714276295])*self.mu_factor_s
-        # interpolator1 = interp1d(self.CF_Loads, kvals, kind='linear')
         normal = self.F_Rz(self.curr_KPA_angle)
         pressure = np.array([30, 34])
         cvals = np.array([13.859,14.739])
@@ -1419,10 +1414,8 @@ class Vehicle:
         currA = self.curr_A(self.curr_KPA_angle)
         currT = self.curr_T(self.curr_KPA_angle)
         currKPA =  self.curr_KPA(self.curr_KPA_angle)
-        temp = Vehicle.projection(currA,currKPA,currT)
-        distance = self.curr_T(self.curr_KPA_angle) + np.array([r*np.cos(phi),r*np.sin(phi),0]) - temp # reference.r_I
-        #Vehicle.linear_interpolation(self.delta_z(self.curr_KPA_angle))
-        # 
+        currI = self.curr_I(self.curr_KPA_angle)
+        distance = self.curr_T(self.curr_KPA_angle) + np.array([r*np.cos(phi),r*np.sin(phi),0]) - currI 
         theta2 = np.radians(self.wheel_angle(self.curr_KPA_angle))
         camber = np.radians(self.camber(self.curr_KPA_angle))
         right_dir = np.array([np.sin(theta2),np.cos(theta2),0])
@@ -1436,14 +1429,9 @@ class Vehicle:
         self.dynamic_analysis = 1
         reference = self.reference()
         theta = self.curr_KPA_angle
-        currA = self.curr_A(self.curr_KPA_angle)
-        currK = self.curr_K(self.curr_KPA_angle)
-        currT = self.curr_T(self.curr_KPA_angle)
-        currKPA =  self.curr_KPA(self.curr_KPA_angle)
-        t = (currT[2] - currK[2]) / currKPA[2]
-        r_I = currK + t * currKPA
-        distance = currT+np.array([r*np.cos(phi),r*np.sin(phi),0]) - r_I # reference.r_I
-        #Vehicle.linear_interpolation(self.delta_z(self.curr_KPA_angle))
+        currT = self.curr_T(theta)
+        r_I = self.curr_I(theta)
+        distance = currT+np.array([r*np.cos(phi),r*np.sin(phi),0]) - r_I 
         temp = self.tempdynamicsolution
         thetaL = np.abs(self.road_steer(self.KPA_rotation_angle_vs_rack(-self.rack_displacement(theta))))
         thetaR = np.abs(self.road_steer(theta))
@@ -1467,14 +1455,10 @@ class Vehicle:
         reference = self.reference()
         theta = self.curr_KPA_angle
         opposite_theta = self.KPA_rotation_angle_vs_rack(np.round(-self.rack_displacement(theta),1))
-        currA = self.curr_A(opposite_theta)
-        currK = self.curr_K(opposite_theta)
         currT = self.curr_T(opposite_theta)
-        currKPA =  self.curr_KPA(opposite_theta)
-        t = (currT[2] - currK[2]) / currKPA[2]
-        r_I = currK + t * currKPA
-        distance = currT+np.array([r*np.cos(phi),r*np.sin(phi),0]) - r_I # reference.r_I
-        #Vehicle.linear_interpolation(self.delta_z(self.curr_KPA_angle))
+        currI = self.curr_I(opposite_theta)
+        currKPA = self.curr_KPA(opposite_theta)
+        distance = currT+np.array([r*np.cos(phi),r*np.sin(phi),0]) - currI 
         temp = self.tempdynamicsolution
         thetaL = np.abs(self.road_steer(self.KPA_rotation_angle_vs_rack(-self.rack_displacement(theta))))
         thetaR = np.abs(self.road_steer(theta))
