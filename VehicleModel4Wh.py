@@ -113,6 +113,13 @@ class Vehicle:
         self.tempdynamictheta = 0
         self.mu = mu
         self.g = g
+        self.tw = tw
+        self.wb = wb
+        self.b = b
+        self.a = wb - b
+        self.GVW = GVW
+        self.FAW = GVW*b/wb
+        self.RAW = GVW*a/wb
         self.trainslipangles()
         self.linkage_friction_contribution_on_steering = linkage_effort   
     @classmethod
@@ -130,11 +137,6 @@ class Vehicle:
         obj.r_K = r_K
         obj.tire_radius = tire_radius
         obj.initial_camber = initial_camber
-        obj.tw = tw
-        obj.wb = wb
-        obj.GVW = GVW
-        obj.b = b
-        obj.a = wb - b
         obj.Kf = wheel_rate_f * tire_stiffness_f / (wheel_rate_f + tire_stiffness_f)
         obj.Kr = wheel_rate_r * tire_stiffness_r / (wheel_rate_r + tire_stiffness_r)
         obj.tiredata = tiredata
@@ -991,7 +993,7 @@ class Vehicle:
     # --- Ackerman Calculations ---
     def ackerman(self, inner_angle):
         reference = self.reference()
-        return np.degrees(np.arctan(reference.wb/(reference.wb/np.tan(np.radians(inner_angle))+reference.tw)))
+        return np.degrees(np.arctan(self.wb/(self.wb/np.tan(np.radians(inner_angle))+self.tw)))
     def ackerman_percentage(self, inner, outer):
         return (inner - outer)/(inner - self.ackerman(inner))*100
     def ackerman_vs_KPA(self, curr_KPA_angle):
@@ -1001,8 +1003,8 @@ class Vehicle:
                                                               np.abs(self.wheel_angle(self.KPA_rotation_angle_vs_rack(np.round(-self.rack_displacement(curr_KPA_angle),1))))))
     def tcr(self, outer_angle, inner_angle):
         reference = self.reference()
-        a = reference.a
-        t = reference.tw
+        a = self.a
+        t = self.tw
         theta1 = np.radians(outer_angle)
         theta2 = np.radians(inner_angle)
         OP1 = np.sin(theta2)*t/np.sin(theta2 - theta1)
@@ -1014,8 +1016,8 @@ class Vehicle:
         return R/1000 #np.sqrt(a**2+OG**2-2*a*OG*np.sin(theta1/2+theta2/2)**2)
     def ccr(self, outer_angle, inner_angle):
         reference = self.reference()
-        a = reference.a
-        t = reference.tw
+        a = self.a
+        t = self.tw
         theta1 = np.radians(outer_angle)
         theta2 = np.radians(inner_angle)
         OP1 = np.sin(theta2)*t/np.sin(theta2 - theta1)
@@ -1063,12 +1065,12 @@ class Vehicle:
         return self.F_Lz(curr_KPA_angle)+self.F_Rz(curr_KPA_angle)
     def RearLoad(self, curr_KPA_angle):
         reference = self.reference()
-        return reference.GVW - self.FrontLoad(curr_KPA_angle)
+        return self.GVW - self.FrontLoad(curr_KPA_angle)
     def FLRR(self,curr_KPA_angle):
         return self.F_Lz(curr_KPA_angle)+self.R_Rz(curr_KPA_angle)
     def FRRL(self,curr_KPA_angle):
         reference = self.reference()
-        return reference.GVW - self.FLRR(curr_KPA_angle)
+        return self.GVW - self.FLRR(curr_KPA_angle)
     def CF_L(self, curr_KPA_angle):
         return self.dynamicsolve(curr_KPA_angle)[8]
     def CF_R(self, curr_KPA_angle):
@@ -1098,14 +1100,14 @@ class Vehicle:
         Rl = reference.Kr*zrl
         Rr = reference.Kr*zrr
         
-        t = reference.tw
-        a = reference.a
-        b = reference.b
-        W = reference.GVW
+        t = self.tw
+        a = self.a
+        b = self.b
+        W = self.GVW
         FL = np.array([self.x_L(self.curr_KPA_angle), self.y_L(self.curr_KPA_angle), -self.z_L(self.curr_KPA_angle)-zfl])
-        FR = np.array([self.x_R(self.curr_KPA_angle), reference.tw+self.y_R(self.curr_KPA_angle), -self.z_R(self.curr_KPA_angle)-zfr])
-        RL = np.array([reference.a+reference.b, 0, -zrl])
-        RR = np.array([reference.a+reference.b, reference.tw, -zrr])
+        FR = np.array([self.x_R(self.curr_KPA_angle), self.tw+self.y_R(self.curr_KPA_angle), -self.z_R(self.curr_KPA_angle)-zfr])
+        RL = np.array([self.a+self.b, 0, -zrl])
+        RR = np.array([self.a+self.b, self.tw, -zrr])
 
         eq1 = Fl*(self.y_L(self.curr_KPA_angle)) + Rr*t +Fr*(t+self.y_R(self.curr_KPA_angle)) - W*t/2
         eq2 = Fl*(a+b-self.x_L(self.curr_KPA_angle)) + Fr*(a+b-self.x_R(self.curr_KPA_angle)) - W*b
@@ -1115,9 +1117,9 @@ class Vehicle:
     def staticsolve(self, theta):
         self.dynamic_analysis = 0
         reference = self.reference()
-        a = reference.a
-        b = reference.b
-        W = reference.GVW
+        a = self.a
+        b = self.b
+        W = self.GVW
         self.curr_KPA_angle = theta
         F = W*b/(a+b)*0.5
         R = W*a/(a+b)*0.5
@@ -1153,16 +1155,16 @@ class Vehicle:
         zfr = Fr/reference.Kf
         zrl = Rl/reference.Kr
         zrr = Rr/reference.Kr
-        a = reference.a
-        b = reference.b
-        t = reference.tw
+        a = self.a
+        b = self.b
+        t = self.tw
         FL = np.array([self.x_L(theta), self.y_L(theta), -self.z_L(theta)-zfl])
         FR = np.array([self.x_R(theta), t+self.y_R(theta), -self.z_R(theta)-zfr])
         RL = np.array([a+b, 0, -zrl])
         RR = np.array([a+b, t, -zrr])
 
         h = reference.CG_height + self.curr_O(theta)[2]-self.curr_T(theta)[2]
-        M = reference.GVW
+        M = self.GVW
         W = M*g
         V = reference.speed
         yL = self.y_L(theta)
@@ -1245,10 +1247,10 @@ class Vehicle:
             self.dynamic_analysis = 1
             reference = self.reference()
             g = self.g
-            a = reference.a
-            b = reference.b
-            W = reference.GVW
-            t = reference.tw
+            a = self.a
+            b = self.b
+            W = self.GVW
+            t = self.tw
             if(theta<=-4):
                 loc = -int(int(theta))
                 limits = self.slipangles[loc-1]
