@@ -1,23 +1,13 @@
 # Important Packages
 import numpy as np
-import pandas as pd
 from scipy.optimize import fsolve
-from scipy.optimize import curve_fit
 from scipy.integrate import solve_ivp
 from sklearn.linear_model import LinearRegression
-from sklearn.neural_network import MLPRegressor
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.svm import SVR
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
-from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.preprocessing import PolynomialFeatures
-from sklearn.metrics import mean_squared_error
 from scipy import integrate
-from scipy.optimize import minimize, NonlinearConstraint
-from scipy.optimize import root_scalar
 from scipy.interpolate import interp1d
-from openpyxl import load_workbook
 
 # Class Vehicle with all the functions
 class Vehicle:
@@ -1590,17 +1580,6 @@ class Vehicle:
         I_ss = self.I_ss  # Moment of Interia of the steering system wrt the steering column
         c_factor = 2*np.pi*self.pinion
         y0 = self.assumed_rack_stroke/c_factor*360 # self.rack_stroke/c_factor*360  # Initial condition for y
-        lock_angle = self.KPA_rotation_angle_vs_rack(53)
-        road_lock_left = self.road_steer_vs_rack(-53)
-        road_lock_right = self.road_steer_vs_rack(53)
-        tempdynamicsolution = self.dynamicsolve(lock_angle)
-        alphaL = tempdynamicsolution[4]
-        alphaR = tempdynamicsolution[5]
-
-        # allowed_angle_left = self.KPA_rotation_angle(road_lock_left - alphaL)
-        # allowed_angle_right = self.KPA_rotation_angle(road_lock_right + alphaR)
-        # supposed_rack_disp = self.rack_vs_road_steer(allowed_angle_left)
-        # self.limit_steering = supposed_rack_disp/c_factor*360
         v0 = 0.0  # Initial condition for y'
         # t_span = (0, 0.1)  # Time range
         # t_eval = np.linspace(t_span[0], t_span[1], 150)  # Time points to evaluate
