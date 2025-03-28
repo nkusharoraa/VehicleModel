@@ -71,11 +71,8 @@ class Vehicle:
         # Create static object
         # ulr - (ulr-slr)/load_rating
 
-        # self.mu_factor_s = 0.89
-        self.mu_factor_d = 0.8
         self.CF_Factor = 1
         self.align_factor = 1
-        self.limit_steering = 0
         self.thetaforcamber = 0
         self.assumed_rack_stroke = assumed_rack_stroke
         self.static = Vehicle.create_object(r_A, r_B, r_C, r_O, r_K, slr, initial_camber, toe_in, tw, wb, GVW, b, 
@@ -1613,26 +1610,6 @@ class Vehicle:
         satFL = TzL*satFLprime*mufl*1.00*Fl*g
         satFR = TzR*satFRprime*mufr*1.00*Fr*g
         return satFL, satFR
-    def left_plus_right_returning_moment(self, curr_KPA_angle):
-        self.dynamic_analysis = 1
-        reference = self.reference()
-        reference.currKPA = (self.curr_A(curr_KPA_angle)-self.curr_K(curr_KPA_angle))/Vehicle.magnitude(reference.r_A-reference.r_K)
-        self.tempdynamicsolution = self.dynamicsolve(curr_KPA_angle)
-        temp = self.tempdynamicsolution
-        thetaL = np.abs(self.road_steer(self.KPA_rotation_angle_vs_rack(np.round(-self.rack_displacement(curr_KPA_angle),1))))
-        thetaR = np.abs(self.road_steer(curr_KPA_angle))
-        alphafL = temp[4]
-        alphafR = temp[5]
-        theta1 = np.radians(thetaL - alphafL)
-        theta2 = np.radians(thetaR - alphafR)
-        raw_left = 0 # self.kpm_circular_dynamic_right(curr_KPA_angle)
-        raw_right = 0 # self.kpm_circular_dynamic_left(curr_KPA_angle)
-        reverse_angle = self.KPA_rotation_angle_vs_rack(np.round(-self.rack_displacement(curr_KPA_angle),1))
-        self.thetaforcamber = theta2
-        friction_contribution_left = self.helper_return(reverse_angle, self.tempdynamicsolution[0])
-        self.thetaforcamber = -theta1
-        friction_contribution_right = self.helper_return(curr_KPA_angle, self.tempdynamicsolution[1])
-        return raw_left + raw_right + friction_contribution_left + friction_contribution_right
     # --- Steering Effort ---
     def tierod_force(self, curr_KPA_angle):
         self.dynamic_analysis = 0
