@@ -1515,24 +1515,6 @@ class Vehicle:
         # print(cornering_contribution)
         force = cornering_contribution + normal_contribution + camber_thrust #- reference.mu*reference.tirep*6894.75729*r*self.circular_contactpatch_element(r,phi)
         return np.dot(np.cross(distance,force), currKPA)
-    def helper_return(self, theta, normal_force):
-        reference = self.reference()
-        self.curr_KPA_angle = theta
-        reference.currKPA = (self.curr_A(theta)-self.curr_K(theta))/Vehicle.magnitude(reference.r_A-reference.r_K)
-        t = theta
-        # normal = normal_force*np.array([0,0,1])/1000*reference.g
-        # fric_dir = np.sign(t)*np.cross(normal,self.wheel_heading(t))
-        # friction = 0 # mu*F_Rz(t)*fric_dir/magnitude(fric_dir)/1000*g
-        # moment_arm = self.curr_T(t)-reference.r_I
-        # total_force = friction+normal
-        # kvals = np.array([0, 0.869265306, 0.86251895, 0.824704082, 0.785904762, 0.777771429, 0.736252639, 0.714276295, 0.714276295])*self.mu_factor_d
-        # interpolator1 = interp1d(self.CF_Loads, kvals, kind='linear')
-        reference.mu = .6*0.215*np.sqrt(2*normal_force/reference.tirep) # 0.4 # interpolator1(normal_force)
-        patch_radius = np.sqrt(normal_force*reference.g/np.pi/reference.tirep/6894.75729)
-        temp = integrate.dblquad(self.tire_twisting_moment_circular_return, 0, 2*np.pi, 0, 1000*patch_radius)[0]/10**9
-        if 0==self.curr_KPA_angle:
-            return temp
-        return temp*np.sign(self.curr_KPA_angle)
     def kpm_circular_dynamic_left(self, theta):
         self.dynamic_analysis = 1
         reference = self.reference()
@@ -1552,7 +1534,6 @@ class Vehicle:
         # temp2 = integrate.dblquad(self.tire_twisting_moment_circular, 0, 2*np.pi, 0, 1000*patch_radius)[0]/10**9
         if 0==self.curr_KPA_angle:
             return temp
-        # friction_contribution = self.helper_return(theta, self.tempdynamicsolution[0])
         sat_contribution = np.abs(np.dot(np.array([0,0,self.tempdynamicsolution[12][0]]),reference.currKPA))
         # print(sat_contribution)
         # print(friction_contribution)
@@ -1577,7 +1558,7 @@ class Vehicle:
         if 0==self.curr_KPA_angle:
             return temp
         sat_contribution = np.abs(np.dot(np.array([0,0,self.tempdynamicsolution[12][1]]),reference.currKPA))
-        return temp + sat_contribution #+ self.helper_return(theta, self.tempdynamicsolution[1]) #+ # temp2*np.sign(theta) #np.dot(np.cross(moment_arm, total_force), KPA) + temp #+kpm_tp(curr_KPA_angle)
+        return temp + sat_contribution 
        
     def static_kingpin_moment(self, curr_KPA_angle):
         return self.kpm_circular(curr_KPA_angle)
@@ -1658,9 +1639,6 @@ class Vehicle:
         right_tierod_force = self.tierod_force_dynamic_right(curr_KPA_angle)
         left_tierod_force = self.tierod_force_dynamic_left(curr_KPA_angle)
         return (np.dot(right_tierod_force,np.array([0,1,0]))) + (np.dot(left_tierod_force, np.array([0,1,0])))
-    
-
-
     def mechanical_advantage_static(self, curr_KPA_angle):
         self.dynamic_analysis = 0
         reference = self.reference()
