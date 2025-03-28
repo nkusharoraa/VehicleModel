@@ -1414,27 +1414,6 @@ class Vehicle:
         # Calculate the scaled value
         scaled_value = (x+y)/2 - (x-y) * (input_value / 22)
         return scaled_value
-    def tire_twisting_moment_circular_return(self, r,phi):
-        reference = self.reference()
-        theta = self.curr_KPA_angle
-        currA = self.curr_A(theta)
-        currT = self.curr_T(theta)
-        currKPA =  self.curr_KPA(theta)
-        temp = Vehicle.projection(currA,currKPA,currT)
-        distance = self.curr_T(theta)+np.array([r*np.cos(phi),r*np.sin(phi),0]) - temp # reference.r_I
-        #Vehicle.linear_interpolation(self.delta_z(self.curr_KPA_angle))
-        # 
-        thetaforcamber = self.thetaforcamber
-        right_dir = np.array([np.sin(thetaforcamber),np.cos(thetaforcamber),0])
-        camber = np.radians(self.camber(theta))
-        normal_contribution  =  reference.tirep*6894.75729*r*np.array([0,0,1])
-        camber_thrust = np.abs(reference.tirep*6894.75729*r*np.tan(camber))*right_dir
-        friction_contribution = reference.mu*reference.tirep*6894.75729*r*self.circular_contactpatch_element(r,phi)
-        # print(friction_contribution)
-        # print(normal_contribution)
-        # print(camber_thrust)
-        force = friction_contribution*np.sign(-theta) + np.sign(theta)*normal_contribution + np.sign(thetaforcamber)*camber_thrust #+ reference.tirep*6894.75729*r*np.array([0,0,1]) #np.array([-np.sin(phi),np.cos(phi),0])
-        return np.dot(np.cross(distance,force),currKPA)
     def tire_twisting_moment_circular_static(self, r,phi):
         reference = self.reference()
         currA = self.curr_A(self.curr_KPA_angle)
