@@ -111,18 +111,18 @@ class Vehicle:
         self.patch_radius_right = 0
         self.tempdynamicsolution = np.zeros(12)
         self.tempdynamictheta = 0
+        self.mu = mu
+        self.g = g
         self.trainslipangles()
         self.linkage_friction_contribution_on_steering = linkage_effort   
     @classmethod
     def create_object(cls, r_A, r_B, r_C, r_O, r_K, tire_radius, initial_camber, toe_in, tw, wb, GVW, b, CG_height, 
                     wheel_rate_f, wheel_rate_r, tire_stiffness_f, tire_stiffness_r, pinion, tirep, dila,
-                    r_La, r_Lb, r_strut, r_Ua, r_Ub, mu, g, tiredata,speed):
+                    r_La, r_Lb, r_strut, r_Ua, r_Ub, tiredata,speed):
         
         obj = type('VehicleState', (), {})()
         
         # Assign instance variables
-        obj.mu = mu
-        obj.g = g
         obj.r_A = r_A
         obj.r_B = r_B 
         obj.r_C = r_C
@@ -1131,8 +1131,7 @@ class Vehicle:
     def dynamicequation(self, x):
         self.dynamic_analysis = 1
         reference = self.reference()
-        mu = reference.mu
-        g = reference.g
+        g = self.g
         Fl = x[0]
         Fr = x[1]
         Rl = x[2]
@@ -1245,8 +1244,7 @@ class Vehicle:
         try:
             self.dynamic_analysis = 1
             reference = self.reference()
-            mu = reference.mu
-            g = reference.g
+            g = self.g
             a = reference.a
             b = reference.b
             W = reference.GVW
@@ -1380,9 +1378,9 @@ class Vehicle:
         pressure = np.array([30, 34])
         cvals = np.array([13.859,14.739])
         interpolator1 = interp1d(pressure, cvals, kind='linear')
-        patch_radius = np.sqrt(normal*reference.g/np.pi/reference.tirep/6894.75729)
-        reference.mu = 0.215*np.sqrt(2*normal/reference.tirep) # interpolator1(reference.tirep)*patch_radius
-        # patch_radius = np.sqrt(normal*reference.g/np.pi/reference.tirep/6894.75729)
+        patch_radius = np.sqrt(normal*self.g/np.pi/reference.tirep/6894.75729)
+        self.mu = 0.215*np.sqrt(2*normal/reference.tirep) # interpolator1(reference.tirep)*patch_radius
+        # patch_radius = np.sqrt(normal*self.g/np.pi/reference.tirep/6894.75729)
         temp = integrate.dblquad(self.tire_twisting_moment_circular_static, 0, 2*np.pi, 0, 1000*patch_radius)[0]/10**9
         if 0==self.curr_KPA_angle:
             return temp
@@ -1418,7 +1416,7 @@ class Vehicle:
         theta2 = np.radians(self.wheel_angle(self.curr_KPA_angle))
         camber = np.radians(self.camber(self.curr_KPA_angle))
         right_dir = np.array([np.sin(theta2),np.cos(theta2),0])
-        friction = reference.mu*reference.tirep*6894.75729*r*self.circular_contactpatch_element(r,phi)
+        friction = self.mu*reference.tirep*6894.75729*r*self.circular_contactpatch_element(r,phi)
         normal_contribution = reference.tirep*6894.75729*r*np.array([0,0,1])
         camber_thrust = np.abs(reference.tirep*6894.75729*r*np.tan(camber))*right_dir
         force = friction*np.sign(-self.curr_KPA_angle) + normal_contribution + np.sign(-theta2)*camber_thrust #np.array([-np.sin(phi),np.cos(phi),0])
@@ -1445,9 +1443,9 @@ class Vehicle:
         CFR = temp[9]
         patch_radius = self.patch_radius_right
         normal_contribution  = np.sign(-theta)*reference.tirep*6894.75729*r*np.array([0,0,1])
-        cornering_contribution =  np.sign(-theta)*CFR/np.pi/(patch_radius**2)*reference.g*r*right_dir
+        cornering_contribution =  np.sign(-theta)*CFR/np.pi/(patch_radius**2)*self.g*r*right_dir
         camber_thrust = np.sign(-theta)*np.abs(reference.tirep*6894.75729*r*np.tan(camber))*right_dir
-        force = cornering_contribution + normal_contribution + camber_thrust #- reference.mu*reference.tirep*6894.75729*r*self.circular_contactpatch_element(r,phi)
+        force = cornering_contribution + normal_contribution + camber_thrust 
         return np.dot(np.cross(distance,force),reference.currKPA)    
     def dynamic_element_moment_circular_left(self, r,phi):
         self.dynamic_analysis = 1
@@ -1473,9 +1471,9 @@ class Vehicle:
         patch_radius = self.patch_radius_left
         normal_contribution = np.sign(-opposite_theta)*reference.tirep*6894.75729*r*np.array([0,0,1])
         camber_thrust = np.sign(-opposite_theta)*np.abs(reference.tirep*6894.75729*r*np.tan(camber))*left_dir
-        cornering_contribution = np.sign(-opposite_theta)*CFL/np.pi/(patch_radius**2)*reference.g*r*left_dir
+        cornering_contribution = np.sign(-opposite_theta)*CFL/np.pi/(patch_radius**2)*self.g*r*left_dir
         # print(cornering_contribution)
-        force = cornering_contribution + normal_contribution + camber_thrust #- reference.mu*reference.tirep*6894.75729*r*self.circular_contactpatch_element(r,phi)
+        force = cornering_contribution + normal_contribution + camber_thrust 
         return np.dot(np.cross(distance,force), currKPA)
     def kpm_circular_dynamic_left(self, theta):
         self.dynamic_analysis = 1
@@ -1490,7 +1488,7 @@ class Vehicle:
         opposite_theta = self.KPA_rotation_angle_vs_rack(np.round(-self.rack_displacement(theta),1))
         reference.currKPA = (self.curr_A(opposite_theta)-self.curr_K(opposite_theta))/Vehicle.magnitude(reference.r_A-reference.r_K)
         t = theta
-        patch_radius = np.sqrt(self.tempdynamicsolution[0]*reference.g/np.pi/reference.tirep/6894.75729)
+        patch_radius = np.sqrt(self.tempdynamicsolution[0]*self.g/np.pi/reference.tirep/6894.75729)
         self.patch_radius_left = patch_radius
         temp = integrate.dblquad(self.dynamic_element_moment_circular_left, 0, 2*np.pi, 0, 1000*patch_radius)[0]/10**9
         # temp2 = integrate.dblquad(self.tire_twisting_moment_circular, 0, 2*np.pi, 0, 1000*patch_radius)[0]/10**9
@@ -1513,7 +1511,7 @@ class Vehicle:
         self.curr_KPA_angle = theta
         reference.currKPA = (self.curr_A(theta)-self.curr_K(theta))/Vehicle.magnitude(reference.r_A-reference.r_K)
         t = theta
-        patch_radius = np.sqrt(self.tempdynamicsolution[1]*reference.g/np.pi/reference.tirep/6894.75729)
+        patch_radius = np.sqrt(self.tempdynamicsolution[1]*self.g/np.pi/reference.tirep/6894.75729)
         self.patch_radius_right = patch_radius
         temp = integrate.dblquad(self.dynamic_element_moment_circular_right, 0, 2*np.pi, 0, 1000*patch_radius)[0]/10**9
         # temp2 = integrate.dblquad(self.tire_twisting_moment_circular, 0, 2*np.pi, 0, 1000*patch_radius)[0]/10**9
@@ -1527,8 +1525,7 @@ class Vehicle:
     def sat(self, alphafL, alphafR, Fl, Fr):
         self.dynamic_analysis = 1
         reference = self.reference()
-        mu = reference.mu
-        g = reference.g
+        g = self.g
         B = reference.tiredata[4]
         C = reference.tiredata[5]
         D = reference.tiredata[6]
