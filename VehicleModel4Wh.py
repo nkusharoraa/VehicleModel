@@ -1745,7 +1745,7 @@ class Vehicle:
         I_w = self.I_w  # Moment of Inertia of the wheel wrt the Kingpin Axis
         I_ss = self.I_ss  # Moment of Interia of the steering system wrt the steering column
         c_factor = 2*np.pi*reference.pinion
-        y0 = 53/c_factor*360 # self.rack_stroke/c_factor*360  # Initial condition for y
+        y0 = self.assumed_rack_stroke/c_factor*360 # self.rack_stroke/c_factor*360  # Initial condition for y
         lock_angle = self.KPA_rotation_angle_vs_rack(53)
         road_lock_left = self.road_steer_vs_rack(-53)
         road_lock_right = self.road_steer_vs_rack(53)
