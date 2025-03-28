@@ -83,6 +83,7 @@ class Vehicle:
         self.thetaforcamber = 0
         self.assumed_rack_stroke = assumed_rack_stroke
         self.pinion = pinion
+        self.speed = speed*5/18 #m/s
         self.static = Vehicle.create_object(r_A, r_B, r_C, r_O, r_K, slr, initial_camber, toe_in, 
                                           CG_height, wheel_rate_f, wheel_rate_r, tire_stiffness_f, tire_stiffness_r,
                                             tirep, r_La, r_Lb, r_strut, r_Ua, r_Ub, tiredata, speed)
@@ -110,11 +111,10 @@ class Vehicle:
         self.Frguess = np.zeros((50))
         self.Rlguess = np.zeros((50))
         self.Rrguess = np.zeros((50))
-        a = wb - b
-        self.Flguess[3] = GVW*b/(a+b)*0.5
-        self.Frguess[3] = GVW*b/(a+b)*0.5
-        self.Rlguess[3] = GVW*a/(a+b)*0.5
-        self.Rrguess[3] = GVW*a/(a+b)*0.5
+        self.Flguess[3] = GVW*b/tw*0.5
+        self.Frguess[3] = self.Flguess[3]
+        self.Rlguess[3] = GVW/2 - self.Flguess[3]
+        self.Rrguess[3] = self.Rlguess[3]
         self.patch_radius_left = 0
         self.patch_radius_right = 0
         self.tempdynamicsolution = np.zeros(12)
@@ -204,8 +204,6 @@ class Vehicle:
         obj.maxdecimal = int(-np.log10(obj.step))
         obj.conversionstep = int(10**obj.maxdecimal)
         # Initializing additional helper variables and methods
-        
-        obj.speed = speed*5/18 #m/s
         obj.CG_height = CG_height
 
 
@@ -1162,7 +1160,7 @@ class Vehicle:
         h = reference.CG_height + self.curr_O(theta)[2]-self.curr_T(theta)[2]
         M = self.GVW
         W = M*g
-        V = reference.speed
+        V = self.speed
         yL = self.y_L(theta)
         yR = self.y_R(theta)
         xL = self.x_L(theta)
@@ -1241,33 +1239,7 @@ class Vehicle:
                 Rlguess = self.Rlguess[loc-1]
                 Rrguess = self.Rrguess[loc-1]
                 self.curr_KPA_angle = theta
-
-                # Fl,Fr,Rl,Rr = self.staticsolve(theta)
-                # inner_angle = np.abs(self.road_steer(theta))
-                # outer_angle = np.abs(self.road_steer_vs_rack(-self.rack_displacement(theta)))
-                # max_angle = np.maximum(inner_angle, outer_angle)
-                # Rad = self.tcr(outer_angle + inner_angle - max_angle, max_angle)
-                # initial_CF = Fhalf/g*reference.speed**2/Rad*1000*np.sin(np.radians((inner_angle + outer_angle)/2))
-                # initial_CR = Rhalf/g*reference.speed**2/Rad*1000*np.sin(np.radians((inner_angle + outer_angle)/2))
-                # initial_alphaf = np.rad2deg(initial_CF/2000*g) #np.sin(1.2*np.radians(alphafL) + 0.8*(np.radians(alphafL) - np.atan(1.2*np.radians(alphafL))))
-                # initial_alphar = np.rad2deg(initial_CR/2000*g)
-
-                # Flguess = W*b/(a+b)*0.5
-                # Frguess = W*b/(a+b)*0.5
-                # Rlguess = W*a/(a+b)*0.5
-                # Rrguess = W*a/(a+b)*0.5
-                # if (self.Flguess[int(-theta-1)]!=0):
-                #     Flguess = self.Flguess[int(-theta-1)]
-                #     Frguess = self.Frguess[int(-theta-1)]
-                #     Rlguess = self.Rlguess[int(-theta-1)]
-                #     Rrguess = self.Rrguess[int(-theta-1)]
                 [Fl,Fr,Rl,Rr, alphafL, alphafR] = (fsolve(self.dynamicequation, [Flguess, Frguess, Rlguess, Rrguess, limits[0], limits[1]], xtol=0.01))
-                # [Fl,Fr,Rl,Rr, alphafL, alphafR] = (fsolve(self.dynamicequation,[Fhalf,Fhalf,Rhalf,Rhalf,limits[0],limits[1]], xtol=0.001))
-                
-                # Fl = reference.Kf*zfl
-                # Fr = reference.Kf*zfr
-                # Rl = reference.Kr*zrl
-                # Rr = reference.Kr*zrr
                 
                 thetaL = np.abs(self.road_steer(self.KPA_rotation_angle_vs_rack(-self.rack_displacement(theta))))
                 thetaR = np.abs(self.road_steer(theta))
