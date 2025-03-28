@@ -54,6 +54,7 @@ instance = Vehicle(
     pinion = currveh.pinion,
     tirep = currveh.tirep,
     dila = currveh.dila,
+    assumed_rack_stroke = currveh.assumed_rack_stroke,
     linkage_effort = currveh.linkage_effort,
     linkage_kpm = currveh.linkage_kpm,
     tiredata = currtire.tiredata,
