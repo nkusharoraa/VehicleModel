@@ -1202,12 +1202,12 @@ class Vehicle:
         Cfr = interpolator(Fr)
         Crl = interpolator(Rl)
         Crr = interpolator(Rr)
-        kvals = np.array([0, 0.869265306, 0.86251895, 0.824704082, 0.785904762, 0.777771429, 0.736252639, 0.714276295, 0.714276295])
-        interpolator1 = interp1d(CF_Loads, kvals, kind='linear')
-        mufl = reference.mu = 1.0*0.215*np.sqrt(2*Fl/reference.tirep) # interpolator1(Fl)
-        mufr = reference.mu = 1.0*0.215*np.sqrt(2*Fr/reference.tirep) # interpolator1(Fr)
-        murl = reference.mu = 1.0*0.215*np.sqrt(2*Rl/reference.tirep) # interpolator1(Rl)
-        murr = reference.mu = 1.0*0.215*np.sqrt(2*Rr/reference.tirep) # interpolator1(Rr)
+        # kvals = np.array([0, 0.869265306, 0.86251895, 0.824704082, 0.785904762, 0.777771429, 0.736252639, 0.714276295, 0.714276295])
+        # interpolator1 = interp1d(CF_Loads, kvals, kind='linear')
+        mufl = 1.0*0.215*np.sqrt(2*Fl/reference.tirep) # interpolator1(Fl)
+        mufr = 1.0*0.215*np.sqrt(2*Fr/reference.tirep) # interpolator1(Fr)
+        murl = 1.0*0.215*np.sqrt(2*Rl/reference.tirep) # interpolator1(Rl)
+        murr = 1.0*0.215*np.sqrt(2*Rr/reference.tirep) # interpolator1(Rr)
         alphafLprime = Cfl/g*np.tan(np.radians(alphafL))/mufl/Fl
         alphafRprime = Cfr/g*np.tan(np.radians(alphafR))/mufr/Fr
         alpharLprime = Crl/g*np.tan(np.radians(alpharL))/murl/Rl
@@ -1334,12 +1334,12 @@ class Vehicle:
             Cfr = interpolator(Fr)
             Crl = interpolator(Rl)
             Crr = interpolator(Rr)
-            kvals = np.array([0, 0.869265306, 0.86251895, 0.824704082, 0.785904762, 0.777771429, 0.736252639, 0.714276295, 0.714276295])*self.mu_factor_d
-            interpolator1 = interp1d(CF_Loads, kvals, kind='linear')
-            mufl = interpolator1(Fl)
-            mufr = interpolator1(Fr)
-            murl = interpolator1(Rl)
-            murr = interpolator1(Rr)
+            # kvals = np.array([0, 0.869265306, 0.86251895, 0.824704082, 0.785904762, 0.777771429, 0.736252639, 0.714276295, 0.714276295])*self.mu_factor_d
+            # interpolator1 = interp1d(CF_Loads, kvals, kind='linear')
+            mufl = 1.0*0.215*np.sqrt(2*Fl/reference.tirep) # interpolator1(Fl)
+            mufr = 1.0*0.215*np.sqrt(2*Fr/reference.tirep) # interpolator1(Fr)
+            murl = 1.0*0.215*np.sqrt(2*Rl/reference.tirep) # interpolator1(Rl)
+            murr = 1.0*0.215*np.sqrt(2*Rr/reference.tirep) # interpolator1(Rr)
             alphafLprime = Cfl/g*np.tan(np.radians(alphafL))/mufl/Fl
             alphafRprime = Cfr/g*np.tan(np.radians(alphafR))/mufr/Fr
             alpharLprime = Crl/g*np.tan(np.radians(alpharL))/murl/Rl
@@ -1528,8 +1528,8 @@ class Vehicle:
         # friction = 0 # mu*F_Rz(t)*fric_dir/magnitude(fric_dir)/1000*g
         # moment_arm = self.curr_T(t)-reference.r_I
         # total_force = friction+normal
-        kvals = np.array([0, 0.869265306, 0.86251895, 0.824704082, 0.785904762, 0.777771429, 0.736252639, 0.714276295, 0.714276295])*self.mu_factor_d
-        interpolator1 = interp1d(self.CF_Loads, kvals, kind='linear')
+        # kvals = np.array([0, 0.869265306, 0.86251895, 0.824704082, 0.785904762, 0.777771429, 0.736252639, 0.714276295, 0.714276295])*self.mu_factor_d
+        # interpolator1 = interp1d(self.CF_Loads, kvals, kind='linear')
         reference.mu = .6*0.215*np.sqrt(2*normal_force/reference.tirep) # 0.4 # interpolator1(normal_force)
         patch_radius = np.sqrt(normal_force*reference.g/np.pi/reference.tirep/6894.75729)
         temp = integrate.dblquad(self.tire_twisting_moment_circular_return, 0, 2*np.pi, 0, 1000*patch_radius)[0]/10**9
@@ -1600,10 +1600,10 @@ class Vehicle:
         pneumaticinterpolator = interp1d(CF_Loads, CF_pneumatictrail, kind='linear')
         Cfl = interpolator(Fl)
         Cfr = interpolator(Fr)
-        kvals = np.array([0, 0.869265306, 0.86251895, 0.824704082, 0.785904762, 0.777771429, 0.736252639, 0.714276295, 0.714276295])*self.mu_factor_d
-        interpolator1 = interp1d(CF_Loads, kvals, kind='linear')
-        mufl = reference.mu = 1.0*0.215*np.sqrt(2*Fl/reference.tirep) # interpolator1(Fl)
-        mufr = reference.mu = 1.0*0.215*np.sqrt(2*Fr/reference.tirep) # interpolator1(Fr)
+        # kvals = np.array([0, 0.869265306, 0.86251895, 0.824704082, 0.785904762, 0.777771429, 0.736252639, 0.714276295, 0.714276295])*self.mu_factor_d
+        # interpolator1 = interp1d(CF_Loads, kvals, kind='linear')
+        mufl = 1.0*0.215*np.sqrt(2*Fl/reference.tirep) # interpolator1(Fl)
+        mufr = 1.0*0.215*np.sqrt(2*Fr/reference.tirep) # interpolator1(Fr)
         alphafLprime = Cfl/g*np.tan(np.radians(alphafL))/mufl/Fl
         alphafRprime = Cfr/g*np.tan(np.radians(alphafR))/mufr/Fr
         satFLprime = D*np.sin(C*np.atan(B*((alphafLprime) - E*(alphafLprime) +E/B*np.atan(B*(alphafLprime)))))
