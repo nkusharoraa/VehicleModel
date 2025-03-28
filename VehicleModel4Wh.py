@@ -77,19 +77,20 @@ class Vehicle:
         self.a = wb - b
         self.GVW = GVW
         self.FAW = GVW*b/wb
-        self.RAW = GVW*a/wb
+        self.RAW = GVW*self.a/wb
         self.CF_Factor = 1
         self.align_factor = 1
         self.thetaforcamber = 0
         self.assumed_rack_stroke = assumed_rack_stroke
-        self.static = Vehicle.create_object(r_A, r_B, r_C, r_O, r_K, slr, initial_camber, toe_in, tw, wb, GVW, b, 
+        self.pinion = pinion
+        self.static = Vehicle.create_object(r_A, r_B, r_C, r_O, r_K, slr, initial_camber, toe_in, 
                                           CG_height, wheel_rate_f, wheel_rate_r, tire_stiffness_f, tire_stiffness_r,
-                                          pinion, tirep, dila, r_La, r_Lb, r_strut, r_Ua, r_Ub, 0.5, g, tiredata, speed)
+                                            tirep, r_La, r_Lb, r_strut, r_Ua, r_Ub, tiredata, speed)
 
         # Create dynamic object 
-        self.dynamic = Vehicle.create_object(r_A, r_B, r_C, r_O, r_K, dlr, initial_camber, toe_in, tw, wb, GVW, b,
+        self.dynamic = Vehicle.create_object(r_A, r_B, r_C, r_O, r_K, dlr, initial_camber, toe_in,
                                            CG_height, wheel_rate_f, wheel_rate_r, tire_stiffness_f, tire_stiffness_r,
-                                           pinion, tirep, dila, r_La, r_Lb, r_strut, r_Ua, r_Ub, 0.4, g, tiredata, speed)
+                                           tirep, r_La, r_Lb, r_strut, r_Ua, r_Ub, tiredata, speed)
         # Initialize common parameters
         self.I_w = I_w
         self.I_ss = I_ss
@@ -101,7 +102,7 @@ class Vehicle:
         self.dynamic_analysis = 0
         reference = self.reference()
         self.model = self.regression_model()
-        self.rack_stroke = self.rack_vs_road_steer(reference.dila - toe_in)
+        self.rack_stroke = self.rack_vs_road_steer(dila - toe_in)
         
         self.slipangles = np.zeros((50, 2))
         self.slipangles[0] = np.array([0,0])
@@ -121,8 +122,8 @@ class Vehicle:
         self.trainslipangles()
         self.linkage_friction_contribution_on_steering = linkage_effort   
     @classmethod
-    def create_object(cls, r_A, r_B, r_C, r_O, r_K, tire_radius, initial_camber, toe_in, tw, wb, GVW, b, CG_height, 
-                    wheel_rate_f, wheel_rate_r, tire_stiffness_f, tire_stiffness_r, pinion, tirep, dila,
+    def create_object(cls, r_A, r_B, r_C, r_O, r_K, tire_radius, initial_camber, toe_in, CG_height, 
+                    wheel_rate_f, wheel_rate_r, tire_stiffness_f, tire_stiffness_r, tirep,
                     r_La, r_Lb, r_strut, r_Ua, r_Ub, tiredata,speed):
         
         obj = type('VehicleState', (), {})()
@@ -138,9 +139,7 @@ class Vehicle:
         obj.Kf = wheel_rate_f * tire_stiffness_f / (wheel_rate_f + tire_stiffness_f)
         obj.Kr = wheel_rate_r * tire_stiffness_r / (wheel_rate_r + tire_stiffness_r)
         obj.tiredata = tiredata
-        obj.pinion = pinion
         obj.tirep = tirep
-        obj.dila = dila
         obj.r_La = r_La
         obj.r_Lb = r_Lb
         obj.r_strut = r_strut
@@ -893,7 +892,7 @@ class Vehicle:
         if np.abs(curr_KPA_angle)<0.2:
             return self.steering_ratio(0.2)
         reference = self.reference()
-        return -1/(self.road_steer(curr_KPA_angle)/self.rack_displacement(curr_KPA_angle)*2*np.pi*reference.pinion/360)
+        return -1/(self.road_steer(curr_KPA_angle)/self.rack_displacement(curr_KPA_angle)*2*np.pi*self.pinion/360)
     def caster(self, curr_KPA_angle):
         CurrentKPA = self.curr_KPA(curr_KPA_angle)
         currx = np.array([1,0,0])
@@ -1579,7 +1578,7 @@ class Vehicle:
                                                                         self.tierod(curr_KPA_angle)/Vehicle.magnitude(self.tierod(curr_KPA_angle))),
                                                                         reference.currKPA)*self.tierod(curr_KPA_angle)/Vehicle.magnitude(self.tierod(curr_KPA_angle))
         rackforce = (np.dot(tierodr,np.array([0,1,0])))
-        return 1/np.abs(rackforce*reference.pinion/1000)
+        return 1/np.abs(rackforce*self.pinion/1000)
     def mechanical_advantage_dynamic(self, curr_KPA_angle):
         self.dynamic_analysis = 1
         reference = self.reference()
@@ -1588,7 +1587,7 @@ class Vehicle:
                                                                         self.tierod(curr_KPA_angle)/Vehicle.magnitude(self.tierod(curr_KPA_angle))),
                                                                         reference.currKPA)*self.tierod(curr_KPA_angle)/Vehicle.magnitude(self.tierod(curr_KPA_angle))
         rackforce = (np.dot(tierodr,np.array([0,1,0])))
-        return 1/np.abs(rackforce*reference.pinion/1000)
+        return 1/np.abs(rackforce*self.pinion/1000)
     def rack_force(self, curr_KPA_angle):
         current_tierod_force = self.tierod_force(curr_KPA_angle)
         opp_angle = np.round(self.KPA_rotation_angle_vs_rack(np.round(-self.rack_displacement(curr_KPA_angle),1)),1)
@@ -1602,7 +1601,7 @@ class Vehicle:
     def static_steering_effort(self, curr_KPA_angle):
         self.dynamic_analysis = 0
         reference = self.reference()
-        return np.abs(self.rack_force(curr_KPA_angle)*reference.pinion/1000) + self.linkage_friction_contribution_on_steering
+        return np.abs(self.rack_force(curr_KPA_angle)*self.pinion/1000) + self.linkage_friction_contribution_on_steering
     def dynamic_steering_effort(self, curr_KPA_angle):
         self.dynamic_analysis = 1
         reference = self.reference()
@@ -1610,14 +1609,14 @@ class Vehicle:
             return 0
         if(curr_KPA_angle>0):
             curr_KPA_angle = self.KPA_rotation_angle_vs_rack(np.round(-self.rack_displacement(curr_KPA_angle),1))
-        return np.abs(self.rack_force_dynamic(curr_KPA_angle)*reference.pinion/1000) + self.linkage_friction_contribution_on_steering
+        return np.abs(self.rack_force_dynamic(curr_KPA_angle)*self.pinion/1000) + self.linkage_friction_contribution_on_steering
     def returnability(self, lim_time):
         self.dynamic_analysis = 1
         reference = self.reference()
         # Parameters
         I_w = self.I_w  # Moment of Inertia of the wheel wrt the Kingpin Axis
         I_ss = self.I_ss  # Moment of Interia of the steering system wrt the steering column
-        c_factor = 2*np.pi*reference.pinion
+        c_factor = 2*np.pi*self.pinion
         y0 = self.assumed_rack_stroke/c_factor*360 # self.rack_stroke/c_factor*360  # Initial condition for y
         lock_angle = self.KPA_rotation_angle_vs_rack(53)
         road_lock_left = self.road_steer_vs_rack(-53)
@@ -1668,13 +1667,13 @@ class Vehicle:
         if np.abs(curr_KPA_angle)<0.2:
             return self.steering_wheel_kpa_ratio(0.2)
         reference = self.reference()
-        return -1/((curr_KPA_angle)/self.rack_displacement(curr_KPA_angle)*2*np.pi*reference.pinion/360)
+        return -1/((curr_KPA_angle)/self.rack_displacement(curr_KPA_angle)*2*np.pi*self.pinion/360)
     def wheel_system(self, t, Y, k):
         self.dynamic_analysis = 1
         reference = self.reference()
         y1, y2 = Y  # Unpack Y = [y1, y2]z
         dy1_dt = y2
-        c_factor = 2*np.pi*reference.pinion
+        c_factor = 2*np.pi*self.pinion
         angle = self.KPA_rotation_angle_vs_rack(y1/360*c_factor)
         friction = self.linkage_friction_contribution_on_steering*self.mechanical_advantage_dynamic(angle)
         factor1 = 1
@@ -1701,7 +1700,7 @@ class Vehicle:
         reference = self.reference()
         y1, y2 = Y  # Unpack Y = [y1, y2]
         dy1_dt = y2
-        c_factor = 2*np.pi*reference.pinion
+        c_factor = 2*np.pi*self.pinion
         angle = self.KPA_rotation_angle_vs_rack(y1/360*c_factor)
         friction = self.linkage_friction_contribution_on_steering
         dy2_dt = -(self.dynamic_steering_effort(angle) - friction)/ k
