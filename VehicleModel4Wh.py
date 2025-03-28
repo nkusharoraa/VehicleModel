@@ -112,7 +112,6 @@ class Vehicle:
         self.tempdynamicsolution = np.zeros(12)
         self.tempdynamictheta = 0
         self.trainslipangles()
-        self.linkage_friction_contribution_on_kpm = linkage_kpm
         self.linkage_friction_contribution_on_steering = linkage_effort   
     @classmethod
     def create_object(cls, r_A, r_B, r_C, r_O, r_K, tire_radius, initial_camber, toe_in, tw, wb, GVW, b, CG_height, 
