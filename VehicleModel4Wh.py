@@ -1627,17 +1627,10 @@ class Vehicle:
         c_factor = 2*np.pi*self.pinion
         angle = self.KPA_rotation_angle_vs_rack(y1/360*c_factor)
         friction = self.linkage_friction_contribution_on_steering*self.mechanical_advantage_dynamic(angle)
-        factor1 = 1
-        factor2 = 0
         factor = 1
         if(np.sign(y2)>=0 and t>0):
             factor = 0
-        #dy2_dt = 1  # Default initialization
-        if(y1<self.limit_steering and t>0):
-            factor1 = 0
-            factor2 = 1
-            #dy2_dt = 0  # Default initialization
-            print(f"Slip Ended parameters: y1 = {y1}, t = {t}")
+            print(f"Optimal parameters: y1 = {y1}, t = {t}")
         dy2_dt = -factor*(self.kpm_circular_dynamic_left(angle) - friction)// k * self.steering_wheel_kpa_ratio(angle)
         #  extra torque from spring calculatioins
         # if angle>-35:
