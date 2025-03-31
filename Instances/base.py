@@ -18,7 +18,6 @@ class QUTE:
         self.dila = -46
         self.assumed_rack_stroke = 53
         self.linkage_effort = 1.7
-        self.linkage_kpm = 8.5
         self.I_w = 0.32 # Moment of Inertia of the Parts that rotate about the Kingpin Axis
         self.I_ss = 0.03 # Moment of Inertia of the Steering Parts that rotate about the Steering Wheel Axis
 
@@ -39,7 +38,6 @@ class R129:
         self.dila = -45
         self.assumed_rack_stroke = 54
         self.linkage_effort = 1.36
-        self.linkage_kpm = 8.16
         self.I_w = 0.34 # Moment of Inertia of the Parts that rotate about the Kingpin Axis
         self.I_ss = 0.03 # Moment of Inertia of the Steering Parts that rotate about the Steering Wheel Axis
 

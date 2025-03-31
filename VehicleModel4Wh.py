@@ -50,7 +50,6 @@ class Vehicle:
              g : float = 9.8,
              speed: float = 10.0,
              linkage_effort: float = 1.36, # Nm
-             linkage_kpm: float = 8.16, # Nm
              I_w: float = 0.34,
              I_ss: float = 0.03,
              tiredata: np.array =  np.array([0.5094636099593582, 0.1120749440478134, 17.8337673155644, 0.4054933824758519, 0.25184969239087557, 5.904032519832173, 0.5968391994177625, 0.309857379732586 ]),
