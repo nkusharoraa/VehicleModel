@@ -1560,9 +1560,7 @@ class Vehicle:
         return (np.dot(current_tierod_force,
                           np.array([0,1,0]))) + np.dot(opposite_tierod_force,
                                                     np.array([0,1,0]))
-        return Vehicle.magnitude(current_tierod_force)**2/(np.dot(current_tierod_force,
-                          np.array([0,1,0]))) - Vehicle.magnitude(opposite_tierod_force)**2/(np.dot(opposite_tierod_force,
-                                                    np.array([0,1,0])))
+ 
     def static_steering_effort(self, curr_KPA_angle):
         self.dynamic_analysis = 0
         reference = self.reference()
