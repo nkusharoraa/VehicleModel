@@ -1555,6 +1555,12 @@ class Vehicle:
         left_tierod_force = self.tierod_force_dynamic_left(curr_KPA_angle)
         return (np.dot(right_tierod_force,np.array([0,1,0]))) + (np.dot(left_tierod_force, np.array([0,1,0])))
     def mechanical_advantage_static(self, curr_KPA_angle):
+        """
+        Calculates the mechanical advantage of the steering system in static conditions.
+
+        This method determines the ratio of the input force applied to the steering wheel
+        to the output force transmitted to the rack, providing insight into the ease of steering.
+        """
         self.dynamic_analysis = 0
         reference = self.reference()
         reference.currKPA = (self.curr_A(curr_KPA_angle)-self.curr_K(curr_KPA_angle))/Vehicle.magnitude(reference.r_A-reference.r_K)
@@ -1566,12 +1572,17 @@ class Vehicle:
     def mechanical_advantage_dynamic(self, curr_KPA_angle):
         self.dynamic_analysis = 1
         reference = self.reference()
-        reference.currKPA = (self.curr_A(curr_KPA_angle)-self.curr_K(curr_KPA_angle))/Vehicle.magnitude(reference.r_A-reference.r_K)
-        tierodr =  1*1000/np.dot(np.cross(self.steering_arm(curr_KPA_angle),
-                                                                        self.tierod(curr_KPA_angle)/Vehicle.magnitude(self.tierod(curr_KPA_angle))),
-                                                                        reference.currKPA)*self.tierod(curr_KPA_angle)/Vehicle.magnitude(self.tierod(curr_KPA_angle))
-        rackforce = (np.dot(tierodr,np.array([0,1,0])))
-        return 1/np.abs(rackforce*self.pinion/1000)
+        curr_A = self.curr_A(curr_KPA_angle)
+        curr_K = self.curr_K(curr_KPA_angle)
+        tierod = self.tierod(curr_KPA_angle)
+        tierod_magnitude = Vehicle.magnitude(tierod)
+        reference.currKPA = (curr_A - curr_K) / Vehicle.magnitude(reference.r_A - reference.r_K)
+        tierodr = 1 * 1000 / np.dot(
+            np.cross(self.steering_arm(curr_KPA_angle), tierod / tierod_magnitude),
+            reference.currKPA
+        ) * tierod / tierod_magnitude
+        rackforce = np.dot(tierodr, np.array([0, 1, 0]))
+        return 1 / np.abs(rackforce * self.pinion / 1000)
     def rack_force(self, curr_KPA_angle):
         current_tierod_force = self.tierod_force(curr_KPA_angle)
         opp_angle = np.round(self.KPA_rotation_angle_vs_rack(np.round(-self.rack_displacement(curr_KPA_angle),1)),1)
