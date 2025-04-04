@@ -1649,7 +1649,8 @@ class Vehicle:
         if np.abs(curr_KPA_angle)<0.2:
             return self.steering_wheel_kpa_ratio(0.2)
         reference = self.reference()
-        return -1/((curr_KPA_angle)/self.rack_displacement(curr_KPA_angle)*2*np.pi*self.pinion/360)
+        rack_disp = self.rack_displacement(curr_KPA_angle)
+        return -1/((curr_KPA_angle)/rack_disp*2*np.pi*self.pinion/360)
     def wheel_system(self, t, Y, k):
         self.dynamic_analysis = 1
         reference = self.reference()
@@ -1665,7 +1666,7 @@ class Vehicle:
             factor = 0
             print(f"Optimal parameters: y1 = {y1}, t = {t}")
         print(f"Temp parameters: x1 = {y1}, t = {t}")
-        dy2_dt = -factor*(self.kpm_circular_dynamic_left(angle) - friction_l)/ k * self.steering_wheel_kpa_ratio(angle)
+        dy2_dt = -factor*(self.kpm_circular_dynamic_left(angle) + self.kpm_circular_dynamic_right(angle) - (friction_l+friction_r)/2)/ k * self.steering_wheel_kpa_ratio(angle)
         #  extra torque from spring calculatioins
         # if angle>-35:
         #       dy2_dt = -factor*(self.left_plus_right_returning_moment(angle) - 2*friction)/ 2/ k * self.steering_wheel_kpa_ratio(angle)
