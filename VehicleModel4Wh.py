@@ -1099,20 +1099,39 @@ class Vehicle:
         eq4 = np.dot(np.cross(FR - FL,RL - FL), FR - RR)
         return [eq1,eq2,eq3,eq4]
     def staticsolve(self, theta):
-        self.dynamic_analysis = 0
-        reference = self.reference()
-        a = self.a
-        b = self.b
-        W = self.GVW
-        self.curr_KPA_angle = theta
-        F = W*b/(a+b)*0.5
-        R = W*a/(a+b)*0.5
-        [zfl,zfr,zrl,zrr] = (fsolve(self.staticequation,[F/reference.Kf,F/reference.Kf,R/reference.Kr,R/reference.Kr]))
-        Fl = reference.Kf*zfl
-        Fr = reference.Kf*zfr
-        Rl = reference.Kr*zrl
-        Rr = reference.Kr*zrr
-        return Fl,Fr,Rl,Rr
+        """
+        Solves for the static wheel loads (front left, front right, rear left, rear right) 
+        based on the current Kingpin Axis (KPA) angle.
+
+        Args:
+        theta (float): Current KPA angle.
+
+        Returns:
+        tuple: Static wheel loads (Fl, Fr, Rl, Rr).
+        """
+        self.dynamic_analysis = 0  # Set to static analysis mode
+        reference = self.reference()  # Get the reference object (static or dynamic)
+        a = self.a  # Distance from CG to rear axle
+        b = self.b  # Distance from CG to front axle
+        W = self.GVW  # Gross Vehicle Weight
+        self.curr_KPA_angle = theta  # Set the current KPA angle
+
+        # Initial guesses for wheel loads based on weight distribution
+        F = W * b / (a + b) * 0.5  # Front axle load (half distributed to each wheel)
+        R = W * a / (a + b) * 0.5  # Rear axle load (half distributed to each wheel)
+
+        # Solve the static equations for wheel displacements (zfl, zfr, zrl, zrr)
+        [zfl, zfr, zrl, zrr] = fsolve(
+            self.staticequation, [F / reference.Kf, F / reference.Kf, R / reference.Kr, R / reference.Kr]
+        )
+
+        # Calculate the wheel loads using the spring stiffness values
+        Fl = reference.Kf * zfl  # Front left wheel load
+        Fr = reference.Kf * zfr  # Front right wheel load
+        Rl = reference.Kr * zrl  # Rear left wheel load
+        Rr = reference.Kr * zrr  # Rear right wheel load
+
+        return Fl, Fr, Rl, Rr  # Return the calculated wheel loads
 
     def dynamicequation(self, x):
         self.dynamic_analysis = 1
