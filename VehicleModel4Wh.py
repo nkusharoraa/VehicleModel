@@ -1186,10 +1186,10 @@ class Vehicle:
         Cfr = interpolator(Fr)
         Crl = interpolator(Rl)
         Crr = interpolator(Rr)
-        mufl = 1.0*0.215*np.sqrt(2*Fl/reference.tirep)
-        mufr = 1.0*0.215*np.sqrt(2*Fr/reference.tirep)
-        murl = 1.0*0.215*np.sqrt(2*Rl/reference.tirep)
-        murr = 1.0*0.215*np.sqrt(2*Rr/reference.tirep)
+        mufl = 1.0*0.2*np.sqrt(2*Fl/reference.tirep)
+        mufr = 1.0*0.2*np.sqrt(2*Fr/reference.tirep)
+        murl = 1.0*0.2*np.sqrt(2*Rl/reference.tirep)
+        murr = 1.0*0.2*np.sqrt(2*Rr/reference.tirep)
         alphafLprime = Cfl/g*np.tan(np.radians(alphafL))/mufl/Fl
         alphafRprime = Cfr/g*np.tan(np.radians(alphafR))/mufr/Fr
         alpharLprime = Crl/g*np.tan(np.radians(alpharL))/murl/Rl
@@ -1277,10 +1277,10 @@ class Vehicle:
             Cfr = interpolator(Fr)
             Crl = interpolator(Rl)
             Crr = interpolator(Rr)
-            mufl = 1.0*0.215*np.sqrt(2*Fl/reference.tirep) 
-            mufr = 1.0*0.215*np.sqrt(2*Fr/reference.tirep) 
-            murl = 1.0*0.215*np.sqrt(2*Rl/reference.tirep) 
-            murr = 1.0*0.215*np.sqrt(2*Rr/reference.tirep) 
+            mufl = 1.0*0.2*np.sqrt(2*Fl/reference.tirep) 
+            mufr = 1.0*0.2*np.sqrt(2*Fr/reference.tirep) 
+            murl = 1.0*0.2*np.sqrt(2*Rl/reference.tirep) 
+            murr = 1.0*0.2*np.sqrt(2*Rr/reference.tirep) 
             alphafLprime = Cfl/g*np.tan(np.radians(alphafL))/mufl/Fl
             alphafRprime = Cfr/g*np.tan(np.radians(alphafR))/mufr/Fr
             alpharLprime = Crl/g*np.tan(np.radians(alpharL))/murl/Rl
@@ -1323,7 +1323,7 @@ class Vehicle:
         cvals = np.array([13.859,14.739])
         interpolator1 = interp1d(pressure, cvals, kind='linear')
         patch_radius = np.sqrt(normal*self.g/np.pi/reference.tirep/6894.75729)
-        self.mu = 0.215*np.sqrt(2*normal/reference.tirep) # interpolator1(reference.tirep)*patch_radius
+        self.mu = 0.2*np.sqrt(2*normal/reference.tirep) # interpolator1(reference.tirep)*patch_radius
         # patch_radius = np.sqrt(normal*self.g/np.pi/reference.tirep/6894.75729)
         temp = integrate.dblquad(self.tire_twisting_moment_circular_static, 0, 2*np.pi, 0, 1000*patch_radius)[0]/10**9
         if 0==self.curr_KPA_angle:
@@ -1456,9 +1456,9 @@ class Vehicle:
         t = theta
         patch_radius = np.sqrt(self.tempdynamicsolution[1]*self.g/np.pi/reference.tirep/6894.75729)
         self.patch_radius_right = patch_radius
-        print('1')
+        # print('1')
         temp = integrate.dblquad(self.dynamic_element_moment_circular_right, 0, 2*np.pi, 0, 1000*patch_radius)[0]/10**9
-        print('2')
+        # print('2')
         if 0==self.curr_KPA_angle:
             return temp
         sat_contribution = np.abs(np.dot(np.array([0,0,self.tempdynamicsolution[12][1]]),currKPA))
@@ -1481,8 +1481,8 @@ class Vehicle:
         pneumaticinterpolator = interp1d(CF_Loads, CF_pneumatictrail, kind='linear')
         Cfl = interpolator(Fl)
         Cfr = interpolator(Fr)
-        mufl = 1.0*0.215*np.sqrt(2*Fl/reference.tirep)
-        mufr = 1.0*0.215*np.sqrt(2*Fr/reference.tirep)
+        mufl = 1.0*0.2*np.sqrt(2*Fl/reference.tirep)
+        mufr = 1.0*0.2*np.sqrt(2*Fr/reference.tirep)
         alphafLprime = Cfl/g*np.tan(np.radians(alphafL))/mufl/Fl
         alphafRprime = Cfr/g*np.tan(np.radians(alphafR))/mufr/Fr
         satFLprime = D*np.sin(C*np.atan(B*((alphafLprime) - E*(alphafLprime) +E/B*np.atan(B*(alphafLprime)))))
@@ -1603,7 +1603,7 @@ class Vehicle:
         t_span = (0, lim_time)  # Time range
         t_eval = np.linspace(t_span[0], t_span[1], 50)  # Time points to evaluate
         # Solve the ODE
-        solution = solve_ivp(system, t_span, [y0, v0], t_eval=t_eval, args=(k,), rtol = 1e-1, atol=1e-1)
+        solution = solve_ivp(system, t_span, [y0, v0], method='BDF', t_eval=t_eval, args=(k,), rtol = 1e-3, atol=0.0001)
         # Extract solution
         t = solution.t
         y = solution.y[0]  # y corresponds to y1
@@ -1622,28 +1622,29 @@ class Vehicle:
             return self.steering_wheel_kpa_ratio(0.2)
         reference = self.reference()
         return -1/((curr_KPA_angle)/self.rack_displacement(curr_KPA_angle)*2*np.pi*self.pinion/360)
-    # def wheel_system(self, t, Y, k):
-    #     self.dynamic_analysis = 1
-    #     reference = self.reference()
-    #     y1, y2 = Y  # Unpack Y = [y1, y2]z
-    #     dy1_dt = y2
-    #     c_factor = 2*np.pi*self.pinion
-    #     angle = self.KPA_rotation_angle_vs_rack(y1/360*c_factor)
-    #     opp_angle = self.KPA_rotation_angle_vs_rack(-y1/360*c_factor)
-    #     friction_r = self.linkage_friction_contribution_on_steering*self.mechanical_advantage_dynamic(angle)
-    #     friction_l = self.linkage_friction_contribution_on_steering*self.mechanical_advantage_dynamic(opp_angle)
-    #     factor = 1
-    #     if(np.sign(y2)>=0 and t>0):
-    #         factor = 0
-    #         print(f"Optimal parameters: y1 = {y1}, t = {t}")
-    #     dy2_dt = -factor*(self.kpm_circular_dynamic_left(angle) - friction_l)/ k * self.steering_wheel_kpa_ratio(angle)
-    #     #  extra torque from spring calculatioins
-    #     # if angle>-35:
-    #     #       dy2_dt = -factor*(self.left_plus_right_returning_moment(angle) - 2*friction)/ 2/ k * self.steering_wheel_kpa_ratio(angle)
-    #     # else:
-    #     #       dy2_dt = -factor*(self.left_plus_right_returning_moment(angle)-0.3*6*(angle+35) - 2*friction)/ 2/ k * self.steering_wheel_kpa_ratio(angle)
-    #     #  print   (dy2_dt, angle)
-    #     return [dy1_dt, dy2_dt]
+    def wheel_system(self, t, Y, k):
+        self.dynamic_analysis = 1
+        reference = self.reference()
+        y1, y2 = Y  # Unpack Y = [y1, y2]z
+        dy1_dt = y2
+        c_factor = 2*np.pi*self.pinion
+        angle = self.KPA_rotation_angle_vs_rack(y1/360*c_factor)
+        opp_angle = self.KPA_rotation_angle_vs_rack(-y1/360*c_factor)
+        friction_r = self.linkage_friction_contribution_on_steering*self.mechanical_advantage_dynamic(angle)
+        friction_l = self.linkage_friction_contribution_on_steering*self.mechanical_advantage_dynamic(opp_angle)
+        factor = 1
+        if(np.sign(y2)>=0 and t>0):
+            factor = 0
+            print(f"Optimal parameters: y1 = {y1}, t = {t}")
+        print(f"Temp parameters: x1 = {y1}, t = {t}")
+        dy2_dt = -factor*(self.kpm_circular_dynamic_left(angle) - friction_l)/ k * self.steering_wheel_kpa_ratio(angle)
+        #  extra torque from spring calculatioins
+        # if angle>-35:
+        #       dy2_dt = -factor*(self.left_plus_right_returning_moment(angle) - 2*friction)/ 2/ k * self.steering_wheel_kpa_ratio(angle)
+        # else:
+        #       dy2_dt = -factor*(self.left_plus_right_returning_moment(angle)-0.3*6*(angle+35) - 2*friction)/ 2/ k * self.steering_wheel_kpa_ratio(angle)
+        #  print   (dy2_dt, angle)
+        return [dy1_dt, dy2_dt]
     def steering_system(self,t,Y,k):
         self.dynamic_analysis = 1
         reference = self.reference()
@@ -1711,36 +1712,68 @@ class Vehicle:
         plt.ylabel(ylabel)
         plt.grid()
     
-    def wheel_system(self, t, Y, k):
-        self.dynamic_analysis = 1
-        reference = self.reference() # https://imgur.com/a/Bv2rWt2
+    # def wheel_system(self, t, Y, k):
+    #     self.dynamic_analysis = 1
+    #     reference = self.reference() # https://imgur.com/a/Bv2rWt2
 
-        x1, x2 = Y  # Unpack Y = [y1, y2]z
-        dx1_dt = x2
-        c_factor = 2*np.pi*self.pinion
-        Iw = self.I_w
-        Is = self.I_ss
-        rack = np.round((x1/360*c_factor),1)
-        if np.abs(rack)>self.assumed_rack_stroke:
-            rack = self.assumed_rack_stroke*np.sign(x1)
-        print(rack)
-        theta_R = self.KPA_rotation_angle_vs_rack(rack)
-        opp_theta_R = self.KPA_rotation_angle_vs_rack(-rack)
-        i = self.steering_wheel_kpa_ratio(theta_R)
-        di_x = derivative(self.steering_wheel_kpa_ratio, theta_R, dx=1e-6)
-        d2i_x = derivative(self.steering_wheel_kpa_ratio, theta_R, n=2, dx=1e-6)
-        term1 = (-x1*i**2 * d2i_x - 2 * i * (i - x1 * di_x) * di_x) / i**4
-        term2 = ((i - x1 * di_x) / i**2) # * dx2_dt
-        mar = self.mechanical_advantage_dynamic(theta_R)
-        mal = self.mechanical_advantage_dynamic(opp_theta_R)
-        torque_lh = self.kpm_circular_dynamic_left(theta_R)
-        friction = np.sign(-x2)*self.linkage_friction_contribution_on_steering
+    #     x1, x2 = Y  # Unpack Y = [y1, y2]z
+    #     dx1_dt = x2
+    #     c_factor = 2*np.pi*self.pinion
+    #     Iw = self.I_w
+    #     Is = self.I_ss
+    #     rack = np.round((x1/360*c_factor),1)
+    #     if np.abs(rack)>self.assumed_rack_stroke:
+    #         rack = self.assumed_rack_stroke*np.sign(x1)
+    #     print(rack)
+    #     theta_R = self.KPA_rotation_angle_vs_rack(rack)
+    #     opp_theta_R = self.KPA_rotation_angle_vs_rack(-rack)
+    #     i = self.steering_wheel_kpa_ratio(theta_R)
+    #     di_x = derivative(self.steering_wheel_kpa_ratio, theta_R, dx=1e-6)
+    #     d2i_x = derivative(self.steering_wheel_kpa_ratio, theta_R, n=2, dx=1e-6)
+    #     term1 = (-x1*i**2 * d2i_x - 2 * i * (i - x1 * di_x) * di_x) / i**4
+    #     term2 = ((i - x1 * di_x) / i**2) # * dx2_dt
+    #     mar = self.mechanical_advantage_dynamic(theta_R)
+    #     mal = self.mechanical_advantage_dynamic(opp_theta_R)
+    #     torque_lh = self.kpm_circular_dynamic_left(theta_R)
+    #     friction = np.sign(-x2)*self.linkage_friction_contribution_on_steering
              
-        factor = 1
-        # if(np.sign(x2)>=0 and t>0):
-        #     factor = 0
-        #     print(f"Optimal parameters: x1 = {x1}, t = {t}")
-        print(f"Temp parameters: x1 = {x1}, t = {t}")
-        dx2_dt = -factor*(Iw*term1*x2**2/mar + torque_lh/mal - friction)/ (Is - Iw*term2/mar) 
+    #     factor = 1
+    #     # if(np.sign(x2)>=0 and t>0):
+    #     #     factor = 0
+    #     #     print(f"Optimal parameters: x1 = {x1}, t = {t}")
+    #     print(f"Temp parameters: x1 = {x1}, t = {t}")
+    #     dx2_dt = -factor*(Iw*term1*x2**2/mar + torque_lh/mal - friction)/ (Is - Iw*term2/mar) 
 
-        return [dx1_dt, dx2_dt]
+    #     return [dx1_dt, dx2_dt]
+    # def wheel_system(self, t, Y, k):
+    #     self.dynamic_analysis = 1
+    #     reference = self.reference() # https://imgur.com/a/Bv2rWt2
+
+    #     x1, x2 = Y  # Unpack Y = [y1, y2]z
+    #     dx1_dt = x2
+    #     c_factor = 2*np.pi*self.pinion
+    #     Iw = self.I_w
+    #     Is = self.I_ss
+    #     rack = np.round((x1/360*c_factor),1)
+    #     if np.abs(rack)>self.assumed_rack_stroke:
+    #         rack = self.assumed_rack_stroke*np.sign(x1)
+    #     print(rack)
+    #     theta_R = self.KPA_rotation_angle_vs_rack(rack)
+    #     opp_theta_R = self.KPA_rotation_angle_vs_rack(-rack)
+    #     i = self.steering_wheel_kpa_ratio(theta_R)
+    #     di_x = derivative(self.steering_wheel_kpa_ratio, theta_R, dx=1e-6)
+    #     d2i_x = derivative(self.steering_wheel_kpa_ratio, theta_R, n=2, dx=1e-6)
+    #     term1 = (-x1*i**2 * d2i_x - 2 * i * (i - x1 * di_x) * di_x) / i**4
+    #     term2 = ((i - x1 * di_x) / i**2) # * dx2_dt
+    #     mal = self.mechanical_advantage_dynamic(opp_theta_R)
+    #     torque_lh = self.kpm_circular_dynamic_left(theta_R)
+    #     friction = np.sign(-x2)*self.linkage_friction_contribution_on_steering*mal
+             
+    #     factor = 1
+    #     # if(np.sign(x2)>=0 and t>0):
+    #     #     factor = 0
+    #     #     print(f"Optimal parameters: x1 = {x1}, t = {t}")
+    #     print(f"Temp parameters: x1 = {x1}, t = {t}")
+    #     dx2_dt = factor*((torque_lh - friction)/Iw-term1*x2**2)/ (term2) 
+
+    #     return [dx1_dt, dx2_dt]
