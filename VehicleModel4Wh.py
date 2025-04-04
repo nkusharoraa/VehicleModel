@@ -1666,7 +1666,7 @@ class Vehicle:
             factor = 0
             print(f"Optimal parameters: y1 = {y1}, t = {t}")
         print(f"Temp parameters: x1 = {y1}, t = {t}")
-        dy2_dt = -factor*(self.kpm_circular_dynamic_left(angle) + self.kpm_circular_dynamic_right(angle) - (friction_l+friction_r)/2)/ k * self.steering_wheel_kpa_ratio(angle)
+        dy2_dt = -factor*(np.minimum(self.kpm_circular_dynamic_left(angle),self.kpm_circular_dynamic_right(angle)) - (friction_l+friction_r)/2)/ k * self.steering_wheel_kpa_ratio(angle)
         #  extra torque from spring calculatioins
         # if angle>-35:
         #       dy2_dt = -factor*(self.left_plus_right_returning_moment(angle) - 2*friction)/ 2/ k * self.steering_wheel_kpa_ratio(angle)
