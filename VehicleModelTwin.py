@@ -113,7 +113,7 @@ class Vehicle:
         self.patch_radius_right = 0
         self.tempdynamicsolution = np.zeros(12)
         self.tempdynamictheta = 0
-        self.trainslipangles()
+        # self.trainslipangles()
         self.linkage_friction_contribution_on_steering = linkage_effort   
     @classmethod
     def create_object(cls, r_A, r_B, r_C, r_O, r_K, r_lowermount, r_uppermount, r_newtierodobj, r_newtierodibj,  tire_radius, initial_camber, toe_in, CG_height, 
@@ -128,8 +128,8 @@ class Vehicle:
         obj.r_C = r_C
         obj.r_O = r_O
         obj.r_K = r_K
-        obj.r_D = r_newtierodibj
-        obj.r_E = r_newtierodobj
+        obj.r_D = r_newtierodobj
+        obj.r_E = r_newtierodibj
         obj.r_lowermount = r_lowermount
         obj.r_uppermount = r_uppermount
         obj.tire_radius = tire_radius
@@ -704,14 +704,14 @@ class Vehicle:
         reference = self.reference()
         t = inputval[0]
         tempB = self.curr_B(self.curr_KPA_angle_for_C)
-        position_to_add = self.zeropos + int(np.round(self.curr_KPA_angle_for_C, reference.maxdecimal) * self.conversionstep)
+        # position_to_add = self.zeropos + int(np.round(self.curr_KPA_angle_for_C, reference.maxdecimal) * self.conversionstep)
         tempC = Vehicle.rotation(
-            self.r_C.tolist(),
-            self.r_lowermount.tolist(),
-            self.r_uppermount.tolist(),
+            reference.r_C.tolist(),
+            reference.r_lowermount.tolist(),
+            reference.r_uppermount.tolist(),
             t
         )
-        eq1 =  Vehicle.magnitude(tempB - tempC) - Vehicle.magnitude(self.r_B - self.r_C)
+        eq1 =  Vehicle.magnitude(tempB - tempC) - Vehicle.magnitude(reference.r_B - reference.r_C)
         return [eq1]     
     def curr_C(self, curr_KPA_angle):
         reference = self.reference()
@@ -732,34 +732,24 @@ class Vehicle:
     def curr_D(self, curr_KPA_angle):
         reference = self.reference()
         if curr_KPA_angle==0:
-            return self.r_D
+            return reference.r_D
         # self.curr_KPA_angle_for_C = curr_KPA_angle
-        position_to_add = self.zeropos+int(np.round(curr_KPA_angle,reference.maxdecimal)*self.conversionstep)
-        if(self.dpD[position_to_add][2]<self.r_D[2]/10):
-            t = self.bell_crank_angle(curr_KPA_angle)
-            self.dpC[position_to_add] = Vehicle.rotation(
-            self.r_C.tolist(),
-            self.r_lowermount.tolist(),
-            self.r_uppermount.tolist(),
+        t = self.bell_crank_angle(curr_KPA_angle)
+        temp =  Vehicle.rotation(
+            reference.r_D.tolist(),
+            reference.r_lowermount.tolist(),
+            reference.r_uppermount.tolist(),
             t
             )
-            self.dpD[position_to_add] =  Vehicle.rotation(
-            self.r_D.tolist(),
-            self.r_lowermount.tolist(),
-            self.r_uppermount.tolist(),
-            t
-            )
-        return self.dpD[position_to_add]
+        return temp
     def curr_E(self, curr_KPA_angle):
         reference = self.reference()
         if curr_KPA_angle==0:
-            return self.r_E
-        position_to_add = self.zeropos+int(np.round(curr_KPA_angle,reference.maxdecimal)*self.conversionstep)
-        if(self.dpE[position_to_add][0]<self.r_E[0]/10):
-            length = Vehicle.magnitude(self.r_E-self.r_D)
-            temp = self.curr_D(curr_KPA_angle)
-            self.dpE[position_to_add] = np.array([self.r_E[0],temp[1]-np.sqrt(length**2-(self.r_E[0]-temp[0])**2-(self.r_E[2]-temp[2])**2), self.r_E[2]])
-        return self.dpE[position_to_add]
+            return reference.r_E
+        length = Vehicle.magnitude(reference.r_E-reference.r_D)
+        temp = self.curr_D(curr_KPA_angle)
+        val = np.array([reference.r_E[0],-(temp[1]-np.sqrt(length**2-(reference.r_E[0]-temp[0])**2-(reference.r_E[2]-temp[2])**2)), reference.r_E[2]])
+        return val
     def solveT(self, inputval):
         reference = self.reference()
         t = inputval[0]
@@ -886,7 +876,7 @@ class Vehicle:
     # --- Rack Displacement, Steering Arm and Tie Rod ---
     def rack_displacement(self, curr_KPA_angle):
         reference = self.reference()
-        return self.curr_C(curr_KPA_angle)[1]-reference.r_C[1]
+        return self.curr_E(curr_KPA_angle)[1]-reference.r_E[1]
     def steering_arm(self, curr_KPA_angle):
         reference = self.reference()
         temp = self.curr_B(curr_KPA_angle)
