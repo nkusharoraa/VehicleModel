@@ -1,6 +1,6 @@
 import numpy as np
 from VehicleModel4Wh import Vehicle
-from Instances.base import R129, CONTINENTAL12580R13
+from Instances.Quad.base import R129, CONTINENTAL12580R13
 currveh = R129()
 currtire = CONTINENTAL12580R13()
 # Coordinates used in R129 vehicle computations

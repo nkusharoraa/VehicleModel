@@ -1,6 +1,6 @@
 import numpy as np
 from VehicleModel4Wh import Vehicle
-from Instances.base import QUTE, MRF13570R1269S
+from Instances.Quad.base import QUTE, MRF13570R1269S
 currveh = QUTE()
 currtire = MRF13570R1269S()
 instance = Vehicle(

@@ -1,21 +1,21 @@
 import numpy as np
 from VehicleModel4Wh import Vehicle
-from Instances.base import QUTE, MRF13570R1269S
+from Instances.Quad.base import QUTE, MRF13570R1269S
 currveh = QUTE()
 currtire = MRF13570R1269S()
 instance = Vehicle(
-    np.array([1047.51, 424.19, 1271.36]),
-    np.array([970.68, 413.41, 1303.77]),
+    np.array([1054.09, 424.19, 1232.43]),
+    np.array([976.99, 413.12, 1267.05]),
     np.array([1130.93, 20.67, 1316.84]),
-    np.array([995.16, 570.00, 992.20]),
-    np.array([987.72, 500.68, 955.80]),
+    np.array([997.96, 571.50, 953.90]),
+    np.array([990.98, 500.68, 917.52]),
     r_La = np.array([1322.30, 515.20, 965.00]),
     r_Lb = np.array([1322.30, 262.79, 965.00]),
-    r_Ua = np.array([1240.14, 401.44, 1283.86]),
-    r_Ub = np.array([1240.14, 497.44, 1283.86]),
-    GVW = 910,
-    b = 750.79,
-    CG_height = 322.29,
+    r_Ua = np.array([1240.13, 401.44, 1283.81]),
+    r_Ub = np.array([1240.13, 497.44, 1283.81]),
+    GVW = 542.68,
+    b = 763.95,
+    CG_height = 330.72,
     slr = currveh.slr,
     dlr = currveh.dlr,
     initial_camber = currveh.initial_camber,
