@@ -723,9 +723,9 @@ class Vehicle:
         # return np.array([reference.r_C[0],temp[1]-np.sqrt(length**2-(reference.r_C[0]-temp[0])**2-(reference.r_C[2]-temp[2])**2), reference.r_C[2]])
         t = self.bell_crank_angle(curr_KPA_angle)
         temp = Vehicle.rotation(
-            self.r_C.tolist(),
-            self.r_lowermount.tolist(),
-            self.r_uppermount.tolist(),
+            reference.r_C.tolist(),
+            reference.r_lowermount.tolist(),
+            reference.r_uppermount.tolist(),
             t
             )
         return temp
@@ -885,7 +885,7 @@ class Vehicle:
         return temp-Vehicle.projection(currA, currKPA, temp)
     def tierod(self, curr_KPA_angle):
         return self.curr_C(curr_KPA_angle)-self.curr_B(curr_KPA_angle)
-    def newtierod(self, curr_KPA_angle):
+    def connecting_rod(self, curr_KPA_angle):
         return self.curr_E(curr_KPA_angle)-self.curr_D(curr_KPA_angle)    
 
     # --- Inclination and Heading ---
@@ -1610,6 +1610,27 @@ class Vehicle:
         right_tierod_force = self.tierod_force_dynamic_right(curr_KPA_angle)
         left_tierod_force = self.tierod_force_dynamic_left(curr_KPA_angle)
         return (np.dot(right_tierod_force,np.array([0,1,0]))) + (np.dot(left_tierod_force, np.array([0,1,0])))
+    def mechanical_advantage_linkages_static(self, curr_KPA_angle):
+        self.dynamic_analysis = 0
+        reference = self.reference()
+        reference.currKPA = (self.curr_A(curr_KPA_angle)-self.curr_K(curr_KPA_angle))/Vehicle.magnitude(reference.r_A-reference.r_K)
+        tierodr = 1*1000/np.dot(np.cross(self.steering_arm(curr_KPA_angle),
+                                                                        self.tierod(curr_KPA_angle)/Vehicle.magnitude(self.tierod(curr_KPA_angle))),
+                                                                        reference.currKPA)*self.tierod(curr_KPA_angle)/Vehicle.magnitude(self.tierod(curr_KPA_angle))
+        bell_crank_pivot = reference.r_uppermount - reference.r_lowermount
+        bell_crank_pivot = bell_crank_pivot/Vehicle.magnitude(bell_crank_pivot)
+        arm_right = self.bell_crank_arm(curr_KPA_angle)/1000
+        moment = np.dot(np.cross(tierodr, arm_right), bell_crank_pivot)
+        temp = self.curr_D(curr_KPA_angle)
+        lower_mount = reference.r_lowermount
+        connecting_rod_arm = temp-Vehicle.projection(lower_mount, bell_crank_pivot, temp)
+        rod_force_r = moment*1000/np.dot(np.cross(connecting_rod_arm,
+                                                                        self.connecting_rod(curr_KPA_angle)/Vehicle.magnitude(self.connecting_rod(curr_KPA_angle))),
+                                                                        bell_crank_pivot)*self.connecting_rod(curr_KPA_angle)/Vehicle.magnitude(self.connecting_rod(curr_KPA_angle))
+        
+        rackforce = np.abs((np.dot(rod_force_r,np.array([0,1,0]))))
+        return Vehicle.magnitude(tierodr)/rackforce
+
     def mechanical_advantage_static(self, curr_KPA_angle):
         """
         Calculates the mechanical advantage of the steering system in static conditions.
@@ -1639,14 +1660,41 @@ class Vehicle:
         ) * tierod / tierod_magnitude
         rackforce = np.dot(tierodr, np.array([0, 1, 0]))
         return 1 / np.abs(rackforce * self.pinion / 1000)
-    def rack_force(self, curr_KPA_angle):
+    def bell_crank_arm(self, curr_KPA_angle):
+        reference = self.reference()
+        bell_crank_pivot = reference.r_uppermount - reference.r_lowermount
+        bell_crank_pivot = bell_crank_pivot/Vehicle.magnitude(bell_crank_pivot)
+        temp = self.curr_C(curr_KPA_angle)
+        lower_mount = reference.r_uppermount
+        return temp-Vehicle.projection(lower_mount, bell_crank_pivot, temp)
+    def bell_crank_moment(self, curr_KPA_angle):
+        reference = self.reference()
         current_tierod_force = self.tierod_force(curr_KPA_angle)
         opp_angle = np.round(self.KPA_rotation_angle_vs_rack(np.round(-self.rack_displacement(curr_KPA_angle),1)),1)
-        opposite_tierod_force = -self.tierod_force(opp_angle)
-        return (np.dot(current_tierod_force,
-                          np.array([0,1,0]))) + np.dot(opposite_tierod_force,
-                                                    np.array([0,1,0]))
- 
+        opposite_tierod_force = self.tierod_force(opp_angle)
+        opposite_tierod_force[1] = -opposite_tierod_force[1]
+        bell_crank_pivot = reference.r_uppermount - reference.r_lowermount
+        bell_crank_pivot = bell_crank_pivot/Vehicle.magnitude(bell_crank_pivot)
+        arm_right = self.bell_crank_arm(curr_KPA_angle)/1000
+        arm_left = self.bell_crank_arm(opp_angle)/1000
+        arm_left[1] = -arm_left[1]
+        moment = np.dot(np.cross(current_tierod_force, arm_right) + np.cross(opposite_tierod_force, arm_left), bell_crank_pivot)
+        return moment
+    def connecting_rod_force(self, curr_KPA_angle):
+        reference = self.reference()
+        bell_crank_pivot = reference.r_uppermount - reference.r_lowermount
+        bell_crank_pivot = bell_crank_pivot/Vehicle.magnitude(bell_crank_pivot)
+        temp = self.curr_D(curr_KPA_angle)
+        lower_mount = reference.r_lowermount
+        connecting_rod_arm = temp-Vehicle.projection(lower_mount, bell_crank_pivot, temp)
+        return self.bell_crank_moment(curr_KPA_angle)*1000/np.dot(np.cross(connecting_rod_arm,
+                                                                        self.connecting_rod(curr_KPA_angle)/Vehicle.magnitude(self.connecting_rod(curr_KPA_angle))),
+                                                                        bell_crank_pivot)*self.connecting_rod(curr_KPA_angle)/Vehicle.magnitude(self.connecting_rod(curr_KPA_angle))
+
+    def rack_force(self, curr_KPA_angle):
+        connecting_rod_force = self.connecting_rod_force(curr_KPA_angle)
+        return (np.dot(connecting_rod_force,
+                          np.array([0,1,0])))
     def static_steering_effort(self, curr_KPA_angle):
         self.dynamic_analysis = 0
         reference = self.reference()
