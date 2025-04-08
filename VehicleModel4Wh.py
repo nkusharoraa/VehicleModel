@@ -532,9 +532,9 @@ class Vehicle:
             )
         return reference.dpA[position_to_add]
     def curr_I(self, curr_KPA_angle):
-        currK = self.curr_K(self.curr_KPA_angle)
-        currT = self.curr_T(self.curr_KPA_angle)
-        currKPA =  self.curr_KPA(self.curr_KPA_angle)
+        currK = self.curr_K(curr_KPA_angle)
+        currT = self.curr_T(curr_KPA_angle)
+        currKPA =  self.curr_KPA(curr_KPA_angle)
         t = (currT[2] - currK[2]) / currKPA[2]
         r_I = currK + t * currKPA
         return r_I
