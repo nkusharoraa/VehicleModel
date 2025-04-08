@@ -1554,6 +1554,15 @@ class Vehicle:
         right_tierod_force = self.tierod_force_dynamic_right(curr_KPA_angle)
         left_tierod_force = self.tierod_force_dynamic_left(curr_KPA_angle)
         return (np.dot(right_tierod_force,np.array([0,1,0]))) + (np.dot(left_tierod_force, np.array([0,1,0])))
+    def mechanical_advantage_linkages_static(self, curr_KPA_angle):
+        self.dynamic_analysis = 0
+        reference = self.reference()
+        reference.currKPA = (self.curr_A(curr_KPA_angle)-self.curr_K(curr_KPA_angle))/Vehicle.magnitude(reference.r_A-reference.r_K)
+        tierodr = 1*1000/np.dot(np.cross(self.steering_arm(curr_KPA_angle),
+                                                                        self.tierod(curr_KPA_angle)/Vehicle.magnitude(self.tierod(curr_KPA_angle))),
+                                                                        reference.currKPA)*self.tierod(curr_KPA_angle)/Vehicle.magnitude(self.tierod(curr_KPA_angle))
+        rackforce = (np.dot(tierodr,np.array([0,1,0])))
+        return Vehicle.magnitude(tierodr)/rackforce
     def mechanical_advantage_static(self, curr_KPA_angle):
         """
         Calculates the mechanical advantage of the steering system in static conditions.
