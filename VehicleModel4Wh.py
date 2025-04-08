@@ -968,7 +968,7 @@ class Vehicle:
             return fsolve(lambda x: self.helperrack(x) - val, x0=[guess], xtol = 0.001)[0]
         except Exception as error:
             # Log the error and adjust theta by adding 0.01
-            print(f"[Ignore] Error encountered at rack displacement = {val}: {error}. Retrying with rack displacement = {val + 0.01}")
+            print(f"[Ignore] Error encountered at rack displacement = {val}: {error}. Retrying with rack displacement = {val - 0.01}")
             return self.KPA_rotation_angle_vs_rack(val - 0.01)
         return (reference.model[2].predict(input_rack_stroke))[0]
        
@@ -1666,6 +1666,8 @@ class Vehicle:
         y1, y2 = Y  # Unpack Y = [y1, y2]z
         dy1_dt = y2
         c_factor = 2*np.pi*self.pinion
+        if (y1/360*c_factor)>self.assumed_rack_stroke:
+            y1 = self.assumed_rack_stroke/c_factor*360
         angle = self.KPA_rotation_angle_vs_rack(y1/360*c_factor)
         opp_angle = self.KPA_rotation_angle_vs_rack(-y1/360*c_factor)
         friction_r = self.linkage_friction_contribution_on_steering*self.mechanical_advantage_dynamic(angle)
