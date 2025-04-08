@@ -4,31 +4,31 @@ from Instances.Quad.base import R129, CONTINENTAL12580R13
 currveh = R129()
 currtire = CONTINENTAL12580R13()
 # Coordinates used in R129 vehicle computations
-strut_x = 10
-strut_y = -15.1
-strut_z = 0
-obj_x = 0
-obj_y = -15
-obj_z = 0
-ibj_x = -5
-ibj_y = -10
-ibj_z = 0
-lbj_x = -10
-lbj_y = -15.1
-lbj_z = 0
-
-# strut_x = 0
-# strut_y = 0
+# strut_x = 10
+# strut_y = -15.1
 # strut_z = 0
 # obj_x = 0
-# obj_y = 0
+# obj_y = -15
 # obj_z = 0
-# ibj_x = 0
-# ibj_y = 0
+# ibj_x = -5
+# ibj_y = -10
 # ibj_z = 0
-# lbj_x = 0
-# lbj_y = 0
+# lbj_x = -10
+# lbj_y = -15.1
 # lbj_z = 0
+
+strut_x = 2.1
+strut_y = 0
+strut_z = 0
+obj_x = 0
+obj_y = -5
+obj_z = 0
+ibj_x = 0
+ibj_y = -5
+ibj_z = 0
+lbj_x = -10
+lbj_y = 0
+lbj_z = 0
 instance = Vehicle(
     np.array([1121.36 + strut_x, 373.90 + strut_y, 1464.24 + strut_z]),
     np.array([981.15 + obj_x, 496.08 + obj_y, 1119.71 + obj_z]),
