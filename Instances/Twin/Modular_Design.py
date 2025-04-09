@@ -44,18 +44,18 @@ rbell_y = 0
 rbell_z = 0
 
 instance = Vehicle(
-    np.array([1046.68 + strut_x, 70.42 + strut_y, 1491.13 + strut_z]),
-    np.array([1118.06 + obj_x, 205.00 + obj_y, 1278.88 + obj_z]),
-    np.array([1193.06 + ibj_x, 69.00 + ibj_y, 1282.88 + ibj_z]),
-    np.array([963.30, 230.00, 1012.20]),
-    np.array([957.67 + lbj_x, 161.50 + lbj_y, 978.43 + lbj_z]),
+    np.array([1046.68 + strut_x, 68.41 + strut_y, 1440.54 + strut_z]),    #    
+    np.array([1096.96 + obj_x, 200.77 + obj_y, 1228.09 + obj_z]),
+    np.array([1193.06 + ibj_x, 69.00 + ibj_y, 1232.29 + ibj_z]),
+    np.array([963.30, 230.00, 961.62]),   #
+    np.array([957.67 + lbj_x, 159.50 + lbj_y, 927.85 + lbj_z]),
     np.array([1128.06 , 0.00, 1203.88]),
     np.array([1128.06 , 0.00, 1303.16]),
-    np.array([1182.09 + lbell_x, -28.19 + lbell_y, 1224.88 + lbell_z]),
-    np.array([1216.48 + rbell_x, 103.75 + rbell_y, 1224.18 + rbell_z]),
-    r_La = np.array([839.67, 0.00, 1013.44]),
-    r_Lb = np.array([1014.67, 0.00, 1013.44]),
-    r_strut = np.array([974.14, 120.35, 1071.88]),
+    np.array([1202.09 + lbell_x, -28.19 + lbell_y, 1174.3 + lbell_z]),
+    np.array([1236.48 + rbell_x, 103.75 + rbell_y, 1173.59 + rbell_z]),
+    r_La = np.array([839.67, 0.00, 962.85]),
+    r_Lb = np.array([1014.67, 0.00, 962.85]),
+    r_strut = np.array([981.77, 113.00, 1065.57]),
     GVW = 1050,
     b = 730,
     CG_height = 250,
