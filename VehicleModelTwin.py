@@ -145,7 +145,7 @@ class Vehicle:
         obj.r_Ub = r_Ub
 
         # Calculate additional points
-        obj.r_D = np.array([obj.r_C[0], 0.00, obj.r_C[2]])
+        # obj.r_D = np.array([obj.r_C[0], 0.00, obj.r_C[2]])
         obj.r_T = np.array([obj.r_O[0], obj.r_O[1] - obj.tire_radius * np.sin(np.radians(obj.initial_camber)),
                             obj.r_O[2] - obj.tire_radius])
         obj.r_O[2] = obj.r_O[2] - obj.tire_radius + obj.tire_radius * np.cos(np.radians(obj.initial_camber))
@@ -748,7 +748,7 @@ class Vehicle:
             return reference.r_E
         length = Vehicle.magnitude(reference.r_E-reference.r_D)
         temp = self.curr_D(curr_KPA_angle)
-        val = np.array([reference.r_E[0],-(temp[1]-np.sqrt(length**2-(reference.r_E[0]-temp[0])**2-(reference.r_E[2]-temp[2])**2)), reference.r_E[2]])
+        val = np.array([reference.r_E[0],(temp[1]+np.sqrt(length**2-(reference.r_E[0]-temp[0])**2-(reference.r_E[2]-temp[2])**2)), reference.r_E[2]])
         return val
     def solveT(self, inputval):
         reference = self.reference()
@@ -1061,7 +1061,15 @@ class Vehicle:
         theta1 = np.radians(outer_angle)
         theta2 = np.radians(inner_angle)
         OP1 = np.sin(theta2)*t/np.sin(theta2 - theta1)
-        return OP1/1000 
+        return OP1/1000
+    def ideal_ccr(self, inner_angle): # For 100% Ackermann
+        wb = self.wb
+        tw = self.tw
+        theta = np.radians(inner_angle)
+        inner_rear_radus = wb/np.tan(theta)
+        outer_rear_radius = inner_rear_radus + tw
+        outer_front_radius = np.sqrt(wb**2 + outer_rear_radius**2)
+        return outer_front_radius
     # --- Tire Contact Patch positions: x_L, x_R, y_L, y_R ---
     def delta_T(self, curr_KPA_angle):
         reference = self.reference()
