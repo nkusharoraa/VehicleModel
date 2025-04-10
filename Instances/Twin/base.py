@@ -1,14 +1,14 @@
 import numpy as np
 
 # --- Helper Classes for Vehicle Inputs ---
-class Modular:
+class ModularRE:
     def __init__(self):
         self.slr = 226
         self.dlr = 241
-        self.initial_camber = 0.4
-        self.toe_in = 0.4
+        self.initial_camber = 0
+        self.toe_in = 0
         self.tw = 460
-        self.wb = 2050
+        self.wb = 2020
         self.wr_front = 1.2
         self.wr_rear = 3
         self.tire_stiffness_front = 220
@@ -21,6 +21,45 @@ class Modular:
         self.I_w = 0.32 # Moment of Inertia of the Parts that rotate about the Kingpin Axis
         self.I_ss = 0.03 # Moment of Inertia of the Steering Parts that rotate about the Steering Wheel Axis
 
+class ModularZ:
+    def __init__(self):
+        self.slr = 226
+        self.dlr = 241
+        self.initial_camber = 0
+        self.toe_in = 0
+        self.tw = 460
+        self.wb = 2110
+        self.wr_front = 1.2
+        self.wr_rear = 3
+        self.tire_stiffness_front = 220
+        self.tire_stiffness_rear = 220
+        self.pinion = 6
+        self.tirep = 30
+        self.dila = -46
+        self.assumed_rack_stroke = 53
+        self.linkage_effort = 1.7
+        self.I_w = 0.32 # Moment of Inertia of the Parts that rotate about the Kingpin Axis
+        self.I_ss = 0.03 # Moment of Inertia of the Steering Parts that rotate about the Steering Wheel Axis
+
+class ModularXW:
+    def __init__(self):
+        self.slr = 226
+        self.dlr = 241
+        self.initial_camber = 0
+        self.toe_in = 0
+        self.tw = 460
+        self.wb = 2340
+        self.wr_front = 1.2
+        self.wr_rear = 3
+        self.tire_stiffness_front = 220
+        self.tire_stiffness_rear = 220
+        self.pinion = 6
+        self.tirep = 30
+        self.dila = -46
+        self.assumed_rack_stroke = 53
+        self.linkage_effort = 1.7
+        self.I_w = 0.32 # Moment of Inertia of the Parts that rotate about the Kingpin Axis
+        self.I_ss = 0.03 # Moment of Inertia of the Steering Parts that rotate about the Steering Wheel Axis
 
 class MRF13570R1269S:
     def __init__(self):
