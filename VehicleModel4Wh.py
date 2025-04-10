@@ -1005,7 +1005,15 @@ class Vehicle:
         theta1 = np.radians(outer_angle)
         theta2 = np.radians(inner_angle)
         OP1 = np.sin(theta2)*t/np.sin(theta2 - theta1)
-        return OP1/1000 
+        return OP1/1000
+    def ideal_ccr(self, inner_angle): # For 100% Ackermann
+        wb = self.wb
+        tw = self.tw
+        theta = np.radians(inner_angle)
+        inner_rear_radus = wb/np.tan(theta)
+        outer_rear_radius = inner_rear_radus + tw
+        outer_front_radius = np.sqrt(wb**2 + outer_rear_radius**2)
+        return outer_front_radius 
     # --- Tire Contact Patch positions: x_L, x_R, y_L, y_R ---
     def delta_T(self, curr_KPA_angle):
         reference = self.reference()
