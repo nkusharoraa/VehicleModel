@@ -1,8 +1,8 @@
 import numpy as np
 from VehicleModelTwin import Vehicle
-from Instances.Twin.base import Modular, CONTINENTAL12580R13
-currveh = Modular()
-currtire = CONTINENTAL12580R13()
+from Instances.Twin.base import ModularRE, MRF13570R1269S
+currveh = ModularRE()
+currtire = MRF13570R1269S()
 # Coordinates used in Modular vehicle computations
 
 # strut_x = 0
