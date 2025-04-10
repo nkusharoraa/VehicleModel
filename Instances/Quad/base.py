@@ -5,8 +5,8 @@ class QUTE:
     def __init__(self):
         self.slr = 226
         self.dlr = 241
-        self.initial_camber = 0.4
-        self.toe_in = 0.4
+        self.initial_camber = 0.4 # to be checked
+        self.toe_in = 0.4 # to be checked
         self.tw = 1143
         self.wb = 1925
         self.wr_front = 1.2
