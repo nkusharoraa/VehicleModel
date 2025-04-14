@@ -791,6 +791,115 @@ class Vehicle:
             reference.dpdz[position_to_add] = reference.dpdz[position_to_add-int(np.sign(curr_KPA_angle))] + old_T[2] - reference.r_T[2]
            
         return reference.dpdz[position_to_add]
+    
+    def solvebump(self, inputval):
+        reference = self.reference()
+        t = inputval[0]
+        theta = self.curr_KPA_angle_for_bump_steer
+        tempT = Vehicle.rotation(
+            self.curr_T(theta).tolist(),
+            self.fvsa_ic(theta).tolist(),
+            self.svsa_ic(theta).tolist(),
+            t
+        )
+        eq1 = self.bump + (tempT - self.curr_T(theta))[2]
+        return [eq1]
+    def solveB(self, inputval):
+        reference = self.reference()
+        x = inputval[0]
+        y = inputval[1]
+        theta = self.curr_KPA_angle_for_bump_steer
+        z = self.curr_B(theta)[2] + self.bump
+        [x1,y1,z1] = self.curr_C(theta)
+        temp = np.array([x,y,z])
+        [t] = fsolve(self.solvebump, [0.01])
+        currK = Vehicle.rotation(
+            self.curr_K(theta).tolist(),
+            self.fvsa_ic(theta).tolist(),
+            self.svsa_ic(theta).tolist(),
+            t
+        )
+        currA = Vehicle.rotation(
+            self.curr_A(theta).tolist(),
+            self.fvsa_ic(theta).tolist(),
+            self.svsa_ic(theta).tolist(),
+            t
+        )
+        currKPA = (currA - currK)
+        currKPA = currKPA/Vehicle.magnitude(currKPA)
+        steeringarm = temp-Vehicle.projection(currA, currKPA, temp)
+        eq1 = (x-x1)**2 + (y-y1)**2 + (z-z1)**2 - Vehicle.magnitude(self.tierod(0))**2
+        eq2 = Vehicle.magnitude(steeringarm) - Vehicle.magnitude(self.steering_arm(0))
+        return [eq1, eq2]
+    def bump_steer(self, curr_KPA_angle, bump):
+        theta = curr_KPA_angle
+        self.curr_KPA_angle_for_bump_steer = theta
+        self.bump = bump
+        [x,y] = fsolve(self.solveB, [0,0])
+        z = self.curr_B(theta)[2] + self.bump
+        currB = np.array([x,y,z])
+        [t] = fsolve(self.solvebump, [0.01])
+        currK = Vehicle.rotation(
+            self.curr_K(theta).tolist(),
+            self.fvsa_ic(theta).tolist(),
+            self.svsa_ic(theta).tolist(),
+            t
+        )
+        currA = Vehicle.rotation(
+            self.curr_A(theta).tolist(),
+            self.fvsa_ic(theta).tolist(),
+            self.svsa_ic(theta).tolist(),
+            t
+        )
+        currKPA = (currA - currK)
+        currKPA = currKPA/Vehicle.magnitude(currKPA)
+        steeringarm = currB-Vehicle.projection(currA, currKPA, currB)
+        currT = Vehicle.rotation(
+            self.curr_T(theta).tolist(),
+            self.fvsa_ic(theta).tolist(),
+            self.svsa_ic(theta).tolist(),
+            t
+        )
+        currW = Vehicle.rotation(
+            self.curr_W(theta).tolist(),
+            self.fvsa_ic(theta).tolist(),
+            self.svsa_ic(theta).tolist(),
+            t
+        )
+        currO = Vehicle.rotation(
+            self.curr_O(theta).tolist(),
+            self.fvsa_ic(theta).tolist(),
+            self.svsa_ic(theta).tolist(),
+            t
+        )
+        currW =  Vehicle.projection(currW, currO - currT, currT)
+        dot = np.dot(steeringarm,self.steering_arm(0))/Vehicle.magnitude(steeringarm)/Vehicle.magnitude(self.steering_arm(0))
+        angle = np.degrees(np.arccos(dot))
+        print(currB)
+        currT = Vehicle.rotation(
+            currT.tolist(),
+            currA.tolist(),
+            currK.tolist(),
+            angle
+        )
+        currO = Vehicle.rotation(
+            currO.tolist(),
+            currA.tolist(),
+            currK.tolist(),
+            angle
+        )
+        currW = Vehicle.rotation(
+            currW.tolist(),
+            currA.tolist(),
+            currK.tolist(),
+            angle
+        )
+        currW =  Vehicle.projection(currW, currO - currT, currT)
+        currTW = currW-currT
+        currTW = currTW/Vehicle.magnitude(currTW)
+        bump_steer = np.degrees(np.arccos(np.dot(currTW, self.wheel_heading(curr_KPA_angle))))
+        return bump_steer
+
     def curr_O(self, curr_KPA_angle):
         reference = self.reference()
         self.curr_KPA_angle_for_T = curr_KPA_angle
