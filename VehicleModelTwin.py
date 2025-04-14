@@ -1030,7 +1030,8 @@ class Vehicle:
        
     def road_steer_vs_rack(self, input_rack_stroke):
         return self.road_steer(self.KPA_rotation_angle_vs_rack(input_rack_stroke))
-    
+    def bell_crank_angle_vs_rack(self, input_rack_stroke):
+        return self.bell_crank_angle(self.KPA_rotation_angle_vs_rack(input_rack_stroke))
     # --- Ackerman Calculations ---
     def ackerman(self, inner_angle):
         reference = self.reference()
