@@ -960,6 +960,10 @@ class Vehicle:
         # Ensure x is a scalar
         x = x[0] if isinstance(x, (list, np.ndarray)) else x
         return self.rack_displacement(x)
+    def helperbellcrank(self,x):
+        # Ensure x is a scalar
+        x = x[0] if isinstance(x, (list, np.ndarray)) else x
+        return self.bell_crank_angle(x)
 
     def regression_model(self):
         reference = self.reference()
@@ -1027,11 +1031,22 @@ class Vehicle:
             print(f"[Ignore] Error encountered at rack displacement = {val}: {error}. Retrying with rack displacement = {val + 0.01}")
             return self.KPA_rotation_angle_vs_rack(val - 0.01)
         return (reference.model[2].predict(input_rack_stroke))[0]
-       
+    def KPA_rotation_angle_vs_bell_crank(self, input_bell_crank_angle):
+        if np.abs(input_bell_crank_angle)<1e-3:
+                return 0
+        val = input_bell_crank_angle
+        input_bell_crank_angle = np.array([input_bell_crank_angle]).reshape(-1, 1)
+        input_bell_crank_angle = self.model[3].fit_transform(input_bell_crank_angle)
+        guess = (self.model[2].predict(input_bell_crank_angle))[0]
+        return fsolve(lambda x: self.helperbellcrank(x) - val, x0=[guess])[0]
     def road_steer_vs_rack(self, input_rack_stroke):
         return self.road_steer(self.KPA_rotation_angle_vs_rack(input_rack_stroke))
     def bell_crank_angle_vs_rack(self, input_rack_stroke):
         return self.bell_crank_angle(self.KPA_rotation_angle_vs_rack(input_rack_stroke))
+    def rack_vs_bell_crank_angle(self, input_bell_crank_angle):
+        return self.rack_displacement(self.KPA_rotation_angle_vs_bell_crank(input_bell_crank_angle))
+    def road_steer_LH_vs_rack(self, input_rack_stroke):
+        return -self.road_steer_vs_rack(self.rack_vs_bell_crank_angle(-self.bell_crank_angle_vs_rack(input_rack_stroke)))
     # --- Ackerman Calculations ---
     def ackerman(self, inner_angle):
         reference = self.reference()
