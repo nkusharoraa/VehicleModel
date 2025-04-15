@@ -1030,7 +1030,6 @@ class Vehicle:
             # Log the error and adjust theta by adding 0.01
             print(f"[Ignore] Error encountered at rack displacement = {val}: {error}. Retrying with rack displacement = {val + 0.01}")
             return self.KPA_rotation_angle_vs_rack(val - 0.01)
-        return (reference.model[2].predict(input_rack_stroke))[0]
     def KPA_rotation_angle_vs_bell_crank(self, input_bell_crank_angle):
         if np.abs(input_bell_crank_angle)<1e-3:
                 return 0
