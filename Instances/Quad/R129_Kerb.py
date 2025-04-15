@@ -4,40 +4,16 @@ from Instances.Quad.base import R129, CONTINENTAL12580R13
 currveh = R129()
 currtire = CONTINENTAL12580R13()
 # Coordinates used in R129 vehicle computations
-# strut_x = 10
-# strut_y = -15.1
-# strut_z = 0
-# obj_x = 0
-# obj_y = -15
-# obj_z = 0
-# ibj_x = -5
-# ibj_y = -10
-# ibj_z = 0
-# lbj_x = -10
-# lbj_y = -15.1
-# lbj_z = 0
 
-strut_x = 2.1
-strut_y = 0
-strut_z = 0
-obj_x = 0
-obj_y = -5
-obj_z = 0
-ibj_x = 0
-ibj_y = -5
-ibj_z = 0
-lbj_x = -10
-lbj_y = 0
-lbj_z = 0
 instance = Vehicle(
-    np.array([1121.36 + strut_x, 373.90 + strut_y, 1464.24 + strut_z]),
-    np.array([980.4 + obj_x, 496 + obj_y, 1105.4 + obj_z]),
-    np.array([996.64 + ibj_x, 203.05 + ibj_y, 1113.44 + ibj_z]),
-    np.array([1050.00, 550.00, 1000.00]),
-    np.array([1050 + lbj_x, 504.93 + lbj_y, 937.63 + lbj_z]),
-    r_La = np.array([950, 233.31, 961.24]),
-    r_Lb = np.array([1150, 233.31, 961.24]),
-    r_strut = np.array([1064.03, 451.65, 1074.02]),
+    np.array([1073.41, 373.90, 1404.88]), # Top Strut Mount
+    np.array([930.40, 491.00, 1046.35]), #  Tierod Outer Ball Joint
+    np.array([946.64, 203.05, 1054.39]), # Tierod Inner Ball Joint
+    np.array([1000.00, 550.00, 940.95]), # Wheel Center
+    np.array([990.00, 504.93, 878.58]), # Lower Ball Joint
+    r_La = np.array([890.00, 233.31, 902.19]), # Lower A-Arm Bush Front
+    r_Lb = np.array([1090.00, 233.31, 902.19]), # Lower A-Arm Bush Rear
+    r_strut = np.array([1014.03, 451.65, 1014.97]), # Lower Strut Mount
     GVW = 530.53,
     b = 931.87,
     CG_height = 209.08,
