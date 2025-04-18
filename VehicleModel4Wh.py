@@ -465,6 +465,8 @@ class Vehicle:
         if reference.dpK[position_to_add][0] < reference.r_K[0] / 10:
             self.curr_KPA_angle_for_T = curr_KPA_angle
             self.old_O = Vehicle.rotation(reference.dpO[position_to_add-int(np.sign(curr_KPA_angle))].tolist(), self.curr_A(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(),self.curr_K(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(), np.sign(curr_KPA_angle)*reference.step)
+            self.old_W = Vehicle.rotation(reference.dpW[position_to_add-int(np.sign(curr_KPA_angle))].tolist(), self.curr_A(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(),self.curr_K(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(), np.sign(curr_KPA_angle)*reference.step)
+            
             [t] = fsolve(self.solveO, [0.01])
             reference.dpK[position_to_add] = Vehicle.rotation(reference.dpK[position_to_add - int(np.sign(curr_KPA_angle))].tolist(),
                                                         self.fvsa_ic(curr_KPA_angle - np.sign(curr_KPA_angle) * reference.step).tolist(),
@@ -522,6 +524,8 @@ class Vehicle:
         if reference.dpA[position_to_add][0] < reference.r_A[0] / 100000:
             self.curr_KPA_angle_for_T = curr_KPA_angle
             self.old_O = Vehicle.rotation(reference.dpO[position_to_add-int(np.sign(curr_KPA_angle))].tolist(), self.curr_A(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(),self.curr_K(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(), np.sign(curr_KPA_angle)*reference.step)
+            self.old_W = Vehicle.rotation(reference.dpW[position_to_add-int(np.sign(curr_KPA_angle))].tolist(), self.curr_A(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(),self.curr_K(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(), np.sign(curr_KPA_angle)*reference.step)
+            
             [t] = fsolve(self.solveO, [0.01])
             reference.dpA[position_to_add] = Vehicle.rotation(
                 reference.dpA[position_to_add - int(np.sign(curr_KPA_angle))].tolist(),
@@ -671,6 +675,8 @@ class Vehicle:
             if(reference.dpB[position_to_add][0]<reference.r_B[0]/1000000000):
                 self.old_B = Vehicle.rotation(reference.dpB[position_to_add-int(np.sign(curr_KPA_angle))].tolist(), self.curr_A(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(),self.curr_K(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(), np.sign(curr_KPA_angle)*reference.step)
                 self.old_O = Vehicle.rotation(reference.dpO[position_to_add-int(np.sign(curr_KPA_angle))].tolist(), self.curr_A(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(),self.curr_K(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(), np.sign(curr_KPA_angle)*reference.step)
+                self.old_W = Vehicle.rotation(reference.dpW[position_to_add-int(np.sign(curr_KPA_angle))].tolist(), self.curr_A(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(),self.curr_K(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(), np.sign(curr_KPA_angle)*reference.step)
+                
                 [t] = fsolve(self.solveO, [0.01], xtol = 0.001)
                 reference.dpB[position_to_add] = Vehicle.rotation(
                     self.old_B.tolist(),
@@ -680,6 +686,7 @@ class Vehicle:
                 )
             return reference.dpB[position_to_add]
         self.old_O = Vehicle.rotation(reference.dpT[position_to_add].tolist(), self.curr_A(rounded_value).tolist(),self.curr_K(rounded_value).tolist(), shift)
+        self.old_W = Vehicle.rotation(reference.dpW[position_to_add].tolist(), self.curr_A(rounded_value).tolist(),self.curr_K(rounded_value).tolist(), shift)
         self.old_B = Vehicle.rotation(reference.dpB[position_to_add].tolist(), self.curr_A(rounded_value).tolist(),self.curr_K(rounded_value).tolist(), shift)
         [t] = fsolve(self.solveO, [0.01], xtol = 0.001)
         temp = Vehicle.rotation(
@@ -703,13 +710,29 @@ class Vehicle:
         t = inputval[0]
         theta = self.curr_KPA_angle_for_T
         position_to_add = reference.zeropos + int(np.round(theta, reference.maxdecimal) * reference.conversionstep)
+        spindle = self.old_O - self.old_W
+        heading = np.cross(np.array([0,0,1]), spindle)
+        dir = np.cross(heading,spindle)
+        inclination = dir/Vehicle.magnitude(dir)
+        oldT = self.old_O + reference.tire_radius*inclination
         tempO = Vehicle.rotation(
             self.old_O.tolist(),
             self.fvsa_ic(theta - np.sign(theta) * reference.step).tolist(),
             self.svsa_ic(theta - np.sign(theta) * reference.step).tolist(),
             t
         )
-        eq1 = self.delta_z(theta) - self.delta_z(theta - reference.step * np.sign(theta)) + (tempO - self.old_O)[2]
+        tempW = Vehicle.rotation(
+            self.old_W.tolist(),
+            self.fvsa_ic(theta - np.sign(theta) * reference.step).tolist(),
+            self.svsa_ic(theta - np.sign(theta) * reference.step).tolist(),
+            t
+        )
+        spindle = tempO - tempW
+        heading = np.cross(np.array([0,0,1]), spindle)
+        dir = np.cross(heading,spindle)
+        inclination = dir/Vehicle.magnitude(dir)
+        tempT = tempO + reference.tire_radius*inclination
+        eq1 = self.delta_z(theta) - self.delta_z(theta - reference.step * np.sign(theta)) + (tempT - oldT)[2]
         return [eq1]
     def curr_W(self, curr_KPA_angle):
         reference = self.reference()
@@ -815,7 +838,7 @@ class Vehicle:
             return 0
         position_to_add = reference.zeropos+int(np.round(curr_KPA_angle,reference.maxdecimal)*reference.conversionstep)
         if(np.abs(reference.dpdz[position_to_add])<1e-4):
-            old_T = Vehicle.rotation(reference.dpT[position_to_add-int(np.sign(curr_KPA_angle))].tolist(), self.curr_A(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(),self.curr_K(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(), np.sign(curr_KPA_angle)*reference.step)
+            old_T = Vehicle.rotation(self.curr_T(curr_KPA_angle - np.sign(curr_KPA_angle)*reference.step).tolist(), self.curr_A(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(),self.curr_K(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(), np.sign(curr_KPA_angle)*reference.step)
             reference.dpdz[position_to_add] = reference.dpdz[position_to_add-int(np.sign(curr_KPA_angle))] + old_T[2] - reference.r_T[2]
            
         return reference.dpdz[position_to_add]
@@ -940,7 +963,7 @@ class Vehicle:
             if(reference.dpO[position_to_add][0]<reference.r_O[0]/1000000000):
                 
                 self.old_O = Vehicle.rotation(reference.dpO[position_to_add-int(np.sign(curr_KPA_angle))].tolist(), self.curr_A(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(),self.curr_K(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(), np.sign(curr_KPA_angle)*reference.step)
-                
+                self.old_W = Vehicle.rotation(reference.dpW[position_to_add-int(np.sign(curr_KPA_angle))].tolist(), self.curr_A(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(),self.curr_K(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(), np.sign(curr_KPA_angle)*reference.step)
                 [t] = fsolve(self.solveO, [0.01])
                 reference.dpO[position_to_add] = Vehicle.rotation(
                     self.old_O.tolist(),
@@ -950,7 +973,7 @@ class Vehicle:
                 )
             return reference.dpO[position_to_add]
         self.old_O = Vehicle.rotation(reference.dpO[position_to_add].tolist(), self.curr_A(rounded_value).tolist(),self.curr_K(rounded_value).tolist(), shift)
-        
+        self.old_W = Vehicle.rotation(reference.dpW[position_to_add].tolist(), self.curr_A(rounded_value).tolist(),self.curr_K(rounded_value).tolist(), shift)
         [t] = fsolve(self.solveO, [0.01])
         tempO = Vehicle.rotation(
             self.old_O.tolist(),
