@@ -101,15 +101,16 @@ class Vehicle:
         self.Frguess = np.zeros((50))
         self.Rlguess = np.zeros((50))
         self.Rrguess = np.zeros((50))
-        self.Flguess[3] = GVW*b/tw*0.5
-        self.Frguess[3] = self.Flguess[3]
-        self.Rlguess[3] = GVW/2 - self.Flguess[3]
-        self.Rrguess[3] = self.Rlguess[3]
+        self.Flguess[0] = self.FAW/self.FAW/2
+        self.Frguess[0] = self.Flguess[0]
+        self.Rlguess[0] = self.RAW/self.FAW/2
+        self.Rrguess[0] = self.Rlguess[0]
         self.patch_radius_left = 0
         self.patch_radius_right = 0
         self.tempdynamicsolution = np.zeros(12)
         self.tempdynamictheta = 0
-        # self.trainslipangles()
+        self.move = 0.01
+        self.trainslipangles()
         self.linkage_friction_contribution_on_steering = linkage_effort   
     @classmethod
     def create_object(cls, r_A, r_B, r_C, r_O, r_K, tire_radius, initial_camber, toe_in, CG_height, 
@@ -467,7 +468,7 @@ class Vehicle:
             self.old_O = Vehicle.rotation(reference.dpO[position_to_add-int(np.sign(curr_KPA_angle))].tolist(), self.curr_A(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(),self.curr_K(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(), np.sign(curr_KPA_angle)*reference.step)
             self.old_W = Vehicle.rotation(reference.dpW[position_to_add-int(np.sign(curr_KPA_angle))].tolist(), self.curr_A(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(),self.curr_K(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(), np.sign(curr_KPA_angle)*reference.step)
             
-            [t] = fsolve(self.solveO, [0.01])
+            [t] = fsolve(self.solveO, [0.01], xtol = 0.001)
             reference.dpK[position_to_add] = Vehicle.rotation(reference.dpK[position_to_add - int(np.sign(curr_KPA_angle))].tolist(),
                                                         self.fvsa_ic(curr_KPA_angle - np.sign(curr_KPA_angle) * reference.step).tolist(),
                                                         self.svsa_ic(curr_KPA_angle - np.sign(curr_KPA_angle) * reference.step).tolist(), t)
@@ -526,7 +527,7 @@ class Vehicle:
             self.old_O = Vehicle.rotation(reference.dpO[position_to_add-int(np.sign(curr_KPA_angle))].tolist(), self.curr_A(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(),self.curr_K(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(), np.sign(curr_KPA_angle)*reference.step)
             self.old_W = Vehicle.rotation(reference.dpW[position_to_add-int(np.sign(curr_KPA_angle))].tolist(), self.curr_A(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(),self.curr_K(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(), np.sign(curr_KPA_angle)*reference.step)
             
-            [t] = fsolve(self.solveO, [0.01])
+            [t] = fsolve(self.solveO, [0.01], xtol = 0.001)
             reference.dpA[position_to_add] = Vehicle.rotation(
                 reference.dpA[position_to_add - int(np.sign(curr_KPA_angle))].tolist(),
                 self.fvsa_ic(curr_KPA_angle - np.sign(curr_KPA_angle) * reference.step).tolist(),
@@ -709,7 +710,7 @@ class Vehicle:
         reference = self.reference()
         t = inputval[0]
         theta = self.curr_KPA_angle_for_T
-        position_to_add = reference.zeropos + int(np.round(theta, reference.maxdecimal) * reference.conversionstep)
+        # position_to_add = reference.zeropos + int(np.round(theta, reference.maxdecimal) * reference.conversionstep)
         spindle = self.old_O - self.old_W
         heading = np.cross(np.array([0,0,1]), spindle)
         dir = np.cross(heading,spindle)
@@ -760,7 +761,7 @@ class Vehicle:
             return reference.dpW[position_to_add]
         self.old_O = Vehicle.rotation(reference.dpO[position_to_add].tolist(), self.curr_A(rounded_value).tolist(),self.curr_K(rounded_value).tolist(), shift)
         self.old_W = Vehicle.rotation(reference.dpW[position_to_add].tolist(), self.curr_A(rounded_value).tolist(),self.curr_K(rounded_value).tolist(), shift)
-        [t] = fsolve(self.solveO, [0.01])
+        [t] = fsolve(self.solveO, [0.01], xtol = 0.001)
         tempW = Vehicle.rotation(
             self.old_W.tolist(),
             self.fvsa_ic(rounded_value).tolist(),
@@ -832,7 +833,6 @@ class Vehicle:
 
         return tempT # np.array([tempO[0], tempT[1], tempT[2]])
     def delta_z(self, curr_KPA_angle):
-        return 0
         reference = self.reference()
         if curr_KPA_angle == 0:
             return 0
@@ -964,7 +964,7 @@ class Vehicle:
                 
                 self.old_O = Vehicle.rotation(reference.dpO[position_to_add-int(np.sign(curr_KPA_angle))].tolist(), self.curr_A(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(),self.curr_K(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(), np.sign(curr_KPA_angle)*reference.step)
                 self.old_W = Vehicle.rotation(reference.dpW[position_to_add-int(np.sign(curr_KPA_angle))].tolist(), self.curr_A(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(),self.curr_K(curr_KPA_angle-reference.step*np.sign(curr_KPA_angle)).tolist(), np.sign(curr_KPA_angle)*reference.step)
-                [t] = fsolve(self.solveO, [0.01])
+                [t] = fsolve(self.solveO, [0.01], xtol = 0.001)
                 reference.dpO[position_to_add] = Vehicle.rotation(
                     self.old_O.tolist(),
                     self.fvsa_ic(curr_KPA_angle - np.sign(curr_KPA_angle) * reference.step).tolist(),
@@ -974,7 +974,7 @@ class Vehicle:
             return reference.dpO[position_to_add]
         self.old_O = Vehicle.rotation(reference.dpO[position_to_add].tolist(), self.curr_A(rounded_value).tolist(),self.curr_K(rounded_value).tolist(), shift)
         self.old_W = Vehicle.rotation(reference.dpW[position_to_add].tolist(), self.curr_A(rounded_value).tolist(),self.curr_K(rounded_value).tolist(), shift)
-        [t] = fsolve(self.solveO, [0.01])
+        [t] = fsolve(self.solveO, [0.01], xtol = 0.001)
         tempO = Vehicle.rotation(
             self.old_O.tolist(),
             self.fvsa_ic(rounded_value).tolist(),
@@ -1161,7 +1161,7 @@ class Vehicle:
             input_rack_stroke = np.array([input_rack_stroke]).reshape(-1, 1)
             input_rack_stroke = self.model[3].fit_transform(input_rack_stroke)
             guess = (self.model[2].predict(input_rack_stroke))[0]
-            return fsolve(lambda x: self.helperrack(x) - val, x0=[guess], xtol = 0.001)[0]
+            return fsolve(lambda x: self.helperrack(x) - val, x0=[guess], xtol = 0.01)[0]
         except Exception as error:
             # Log the error and adjust theta by adding 0.01
             print(f"[Ignore] Error encountered at rack displacement = {val}: {error}. Retrying with rack displacement = {val - 0.01}")
@@ -1362,14 +1362,17 @@ class Vehicle:
         self.dynamic_analysis = 1
         reference = self.reference()
         g = self.g
-        Fl = x[0]
-        Fr = x[1]
-        Rl = x[2]
-        Rr = x[3]
+        xFl = x[0]
+        xFr = x[1]
+        xRl = x[2]
+        xRr = x[3]
         alphafL = x[4]
         alphafR = x[5]
         # R = x[6]
-        
+        Fl = xFl * self.FAW
+        Fr = xFr * self.FAW
+        Rl = xRl * self.FAW
+        Rr = xRr * self.FAW
         # Fl = reference.Kfce.Kfcerence.Kf*zfl
         # Fr = reference.Kfce.Kf*zfr
         # Rl = reference.Krce.Krce.Krce.Kr*zrl
@@ -1426,10 +1429,17 @@ class Vehicle:
         CF_Loads = self.CF_Loads # np.array([0, 150, 200, 250, 500])
         CF_Stiffnessrad= self.CF_Stiffnessrad*self.CF_Factor # np.array([0, 20234.57749,	23031.75745, 24629.16378, 24629.16378 + 250*(24629.16378-23031.75745)/50])
         interpolator = interp1d(CF_Loads, CF_Stiffnessrad, kind='linear')
-        Cfl = interpolator(Fl)
-        Cfr = interpolator(Fr)
-        Crl = interpolator(Rl)
-        Crr = interpolator(Rr)
+        if (Fl<0 or Fr<0 or Rl<0 or Rr<0 or Fl>CF_Loads[-1] or Fr>CF_Loads[-1] or Rl>CF_Loads[-1] or Rr>CF_Loads[-1]):
+            eq1 = -1
+            eq2 = -1
+            eq3 = -1
+            eq4 = -1
+            eq5 = -1
+            eq6 = -1
+        Cfl = np.sign(Fl)*interpolator(np.abs(Fl))
+        Cfr = np.sign(Fr)*interpolator(np.abs(Fr))
+        Crl = np.sign(Rl)*interpolator(np.abs(Rl))
+        Crr = np.sign(Rr)*interpolator(np.abs(Rr))
         mufl = 1.0*0.2*np.sqrt(2*Fl/reference.tirep)
         mufr = 1.0*0.2*np.sqrt(2*Fr/reference.tirep)
         murl = 1.0*0.2*np.sqrt(2*Rl/reference.tirep)
@@ -1465,7 +1475,7 @@ class Vehicle:
             b = self.b
             W = self.GVW
             t = self.tw
-            if(theta<=-4):
+            if(theta<=-1):
                 loc = -int(int(theta))
                 limits = self.slipangles[loc-1]
                 Flguess = self.Flguess[loc-1]
@@ -1473,8 +1483,7 @@ class Vehicle:
                 Rlguess = self.Rlguess[loc-1]
                 Rrguess = self.Rrguess[loc-1]
                 self.curr_KPA_angle = theta
-                [Fl,Fr,Rl,Rr, alphafL, alphafR] = (fsolve(self.dynamicequation, [Flguess, Frguess, Rlguess, Rrguess, limits[0], limits[1]], xtol=0.01))
-                
+                [Fl,Fr,Rl,Rr, alphafL, alphafR] = (fsolve(self.dynamicequation, [Flguess, Frguess, Rlguess, Rrguess, limits[0], limits[1]], xtol=0.1))
                 thetaL = np.abs(self.road_steer(self.KPA_rotation_angle_vs_rack(np.round(-self.rack_displacement(theta),1))))
                 thetaR = np.abs(self.road_steer(theta))
                 theta2 = np.radians(thetaR - alphafR)
@@ -1496,6 +1505,10 @@ class Vehicle:
                 Rhalf = W*a/(a+b)*0.5
                 tempsol = self.dynamicsolve(-4)
                 Fl,Fr,Rl,Rr, alphafL, alphafR, alpharL, alpharR, CFL, CFR, CRL, CRR, SAT = tempsol[0], tempsol[1], tempsol[2], tempsol[3], tempsol[4], tempsol[5], tempsol[6], tempsol[7], tempsol[8], tempsol[9], tempsol[10], tempsol[11], tempsol[12]
+                Fl = self.FAW * Fl
+                Fr = self.FAW * Fr
+                Rl = self.FAW * Rl
+                Rr = self.FAW * Rr
                 Fl = Fhalf + np.abs(theta)*(Fl - Fhalf)/4
                 Fr = Fhalf + np.abs(theta)*(Fr - Fhalf)/4
                 Rl = Rhalf + np.abs(theta)*(Rl - Rhalf)/4
@@ -1517,6 +1530,12 @@ class Vehicle:
             CF_Loads = self.CF_Loads # np.array([0, 150, 200, 250, 500])
             CF_Stiffnessrad = self.CF_Stiffnessrad*self.CF_Factor # np.array([0, 20234.57749,	23031.75745, 24629.16378, 24629.16378 + 250*(24629.16378-23031.75745)/50])
             interpolator = interp1d(CF_Loads, CF_Stiffnessrad, kind='linear')
+            Fl = self.FAW * Fl
+            Fr = self.FAW * Fr
+            Rl = self.FAW * Rl
+            Rr = self.FAW * Rr
+            if (Fl<0 or Fr<0 or Rl<0 or Rr<0 or Fl>CF_Loads[-1] or Fr>CF_Loads[-1] or Rl>CF_Loads[-1] or Rr>CF_Loads[-1]):
+                return self.dynamicsolve(theta + 0.01)
             Cfl = interpolator(Fl)
             Cfr = interpolator(Fr)
             Crl = interpolator(Rl)
@@ -1538,22 +1557,23 @@ class Vehicle:
             return Fl,Fr,Rl,Rr, alphafL, alphafR, alpharL, alpharR, CFL, CFR, CRL, CRR, SAT
         except Exception as error:
             # Log the error and adjust theta by subtracting 0.01
-            print(f"Error encountered at theta = {theta}: {error}. Retrying with theta = {theta + 0.01}")
-            return self.dynamicsolve(theta + 0.01)
+            self.move = -(self.move+np.sign(self.move)*0.01)
+            print(f"Error encountered at theta = {theta}: {error}. Retrying with theta = {theta + self.move}")
+            return self.dynamicsolve(theta + self.move)
 
     def trainslipangles(self):
         self.dynamic_analysis = 1
         reference = self.reference()
-        angle = -3
+        angle = 0
         for i in range(49 - np.abs(int(angle))):
             angle = angle - 1
             temp = self.dynamicsolve(angle)
             loc = np.abs(np.abs(int(angle)))
             print(f"Slip Angles Training at a Kingpin Rotation Angle of {angle} deg")
-            self.Flguess[loc] = temp[0]
-            self.Frguess[loc] = temp[1]
-            self.Rlguess[loc] = temp[2]
-            self.Rrguess[loc] = temp[3]
+            self.Flguess[loc] = temp[0]/self.FAW
+            self.Frguess[loc] = temp[1]/self.FAW
+            self.Rlguess[loc] = temp[2]/self.FAW
+            self.Rrguess[loc] = temp[3]/self.FAW
             self.slipangles[loc][0] = temp[4]
             self.slipangles[loc][1] = temp[5]
     # --- Kingpin Moment Calulations ---
