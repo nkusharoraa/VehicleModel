@@ -1540,10 +1540,10 @@ class Vehicle:
             Cfr = interpolator(Fr)
             Crl = interpolator(Rl)
             Crr = interpolator(Rr)
-            mufl = 1.0*0.2*np.sqrt(2*Fl/reference.tirep) 
-            mufr = 1.0*0.2*np.sqrt(2*Fr/reference.tirep) 
-            murl = 1.0*0.2*np.sqrt(2*Rl/reference.tirep) 
-            murr = 1.0*0.2*np.sqrt(2*Rr/reference.tirep) 
+            mufl = 1.0*0.18*np.sqrt(2*Fl/reference.tirep) 
+            mufr = 1.0*0.18*np.sqrt(2*Fr/reference.tirep) 
+            murl = 1.0*0.18*np.sqrt(2*Rl/reference.tirep) 
+            murr = 1.0*0.18*np.sqrt(2*Rr/reference.tirep) 
             alphafLprime = Cfl/g*np.tan(np.radians(alphafL))/mufl/Fl
             alphafRprime = Cfr/g*np.tan(np.radians(alphafR))/mufr/Fr
             alpharLprime = Crl/g*np.tan(np.radians(alpharL))/murl/Rl
@@ -1587,7 +1587,7 @@ class Vehicle:
         cvals = np.array([13.859,14.739])
         interpolator1 = interp1d(pressure, cvals, kind='linear')
         patch_radius = np.sqrt(normal*self.g/np.pi/reference.tirep/6894.75729)
-        self.mu = 0.2*np.sqrt(2*normal/reference.tirep) # interpolator1(reference.tirep)*patch_radius
+        self.mu = 0.18*np.sqrt(2*normal/reference.tirep) # interpolator1(reference.tirep)*patch_radius
         # patch_radius = np.sqrt(normal*self.g/np.pi/reference.tirep/6894.75729)
         temp = integrate.dblquad(self.tire_twisting_moment_circular_static, 0, 2*np.pi, 0, 1000*patch_radius)[0]/10**9
         if 0==self.curr_KPA_angle:
@@ -1745,8 +1745,8 @@ class Vehicle:
         pneumaticinterpolator = interp1d(CF_Loads, CF_pneumatictrail, kind='linear')
         Cfl = interpolator(Fl)
         Cfr = interpolator(Fr)
-        mufl = 1.0*0.2*np.sqrt(2*Fl/reference.tirep)
-        mufr = 1.0*0.2*np.sqrt(2*Fr/reference.tirep)
+        mufl = 1.0*0.18*np.sqrt(2*Fl/reference.tirep)
+        mufr = 1.0*0.18*np.sqrt(2*Fr/reference.tirep)
         alphafLprime = Cfl/g*np.tan(np.radians(alphafL))/mufl/Fl
         alphafRprime = Cfr/g*np.tan(np.radians(alphafR))/mufr/Fr
         satFLprime = D*np.sin(C*np.atan(B*((alphafLprime) - E*(alphafLprime) +E/B*np.atan(B*(alphafLprime)))))
@@ -1922,7 +1922,7 @@ class Vehicle:
             factor = 0
             print(f"Optimal parameters: y1 = {y1}, t = {t}")
         print(f"Temp parameters: x1 = {y1}, t = {t}")
-        dy2_dt = -factor*(np.minimum(self.kpm_circular_dynamic_left(angle),self.kpm_circular_dynamic_right(angle)) - (friction_l+friction_r)/2)/ k * self.steering_wheel_kpa_ratio(angle)
+        dy2_dt = -factor*((self.kpm_circular_dynamic_left(angle)+self.kpm_circular_dynamic_right(angle))/2 - (friction_l+friction_r)/2)/ k * self.steering_wheel_kpa_ratio(angle)
         #  extra torque from spring calculatioins
         # if angle>-35:
         #       dy2_dt = -factor*(self.left_plus_right_returning_moment(angle) - 2*friction)/ 2/ k * self.steering_wheel_kpa_ratio(angle)
