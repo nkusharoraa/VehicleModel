@@ -13,7 +13,7 @@ class QUTE:
         self.wr_rear = 3
         self.tire_stiffness_front = 220
         self.tire_stiffness_rear = 220
-        self.pinion = 6
+        self.pinion = 5.91
         self.tirep = 30
         self.dila = -46
         self.assumed_rack_stroke = 53
@@ -33,7 +33,7 @@ class R129:
         self.wr_rear = 2
         self.tire_stiffness_front = 220
         self.tire_stiffness_rear = 220
-        self.pinion = 6
+        self.pinion = 5.91
         self.tirep = 30
         self.dila = -45
         self.assumed_rack_stroke = 54
