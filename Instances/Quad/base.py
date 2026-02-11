@@ -64,6 +64,27 @@ class Golf:
         self.I_w = 0.32 # Moment of Inertia of the Parts that rotate about the Kingpin Axis
         self.I_ss = 0.03 # Moment of Inertia of the Steering Parts that rotate about the Steering Wheel Axis
 
+class Modular:
+    def __init__(self):
+        self.slr = 241
+        self.dlr = 241
+        self.initial_camber = 1 # to be checked
+        self.toe_in = 0 # to be checked
+        self.twf = 455
+        self.twr = 1250
+        self.wb = 2445
+        self.wr_front = 1.18
+        self.wr_rear = 2.17
+        self.tire_stiffness_front = 220
+        self.tire_stiffness_rear = 220
+        self.pinion = 5.91
+        self.tirep = 30
+        self.dila = -46
+        self.assumed_rack_stroke = 53
+        self.linkage_effort = 1.7
+        self.I_w = 0.32 # Moment of Inertia of the Parts that rotate about the Kingpin Axis
+        self.I_ss = 0.03 # Moment of Inertia of the Steering Parts that rotate about the Steering Wheel Axis
+
 class MRF13570R1269S:
     def __init__(self):
         self.tiredata = np.array([
