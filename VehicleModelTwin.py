@@ -126,7 +126,7 @@ class Vehicle:
         obj.r_A = r_A
         obj.r_B = r_B 
         obj.r_C = r_C
-        obj.r_O = r_O
+        obj.r_O = np.array(r_O, dtype=float)  # copy: line below mutates r_O[2]
         obj.r_K = r_K
         obj.r_D = r_newtierodobj
         obj.r_E = r_newtierodibj
