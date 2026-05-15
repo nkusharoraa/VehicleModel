@@ -105,7 +105,7 @@ class Vehicle:
         self.Frguess = np.zeros((50))
         self.Rlguess = np.zeros((50))
         self.Rrguess = np.zeros((50))
-        self.Flguess[3] = GVW*b/tw*0.5
+        self.Flguess[3] = GVW*b/wb*0.5  # FAW/2 -- static front-left load
         self.Frguess[3] = self.Flguess[3]
         self.Rlguess[3] = GVW/2 - self.Flguess[3]
         self.Rrguess[3] = self.Rlguess[3]
